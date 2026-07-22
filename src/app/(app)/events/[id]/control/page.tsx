@@ -1,0 +1,57 @@
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { ControlPanel } from "./control-panel";
+import type { EventFieldValueRow, SlotWithFields } from "../content/types";
+
+export default async function EventControlPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: event } = await supabase
+    .from("live_events")
+    .select("id, name, active_slot_id, public_token, template_id, templates(name, canvas_width, canvas_height)")
+    .eq("id", id)
+    .single();
+
+  if (!event) notFound();
+
+  const { data: slots } = await supabase
+    .from("template_slots")
+    .select("*, template_slot_fields(*)")
+    .eq("template_id", event.template_id)
+    .order("sort_order", { ascending: true });
+
+  const { data: values } = await supabase
+    .from("event_field_values")
+    .select("*")
+    .eq("live_event_id", id);
+
+  const template = event.templates as unknown as {
+    name: string;
+    canvas_width: number;
+    canvas_height: number;
+  } | null;
+
+  const orderedSlots = ((slots ?? []) as unknown as SlotWithFields[]).map((s) => ({
+    ...s,
+    template_slot_fields: [...s.template_slot_fields].sort((a, b) => a.sort_order - b.sort_order),
+  }));
+
+  return (
+    <ControlPanel
+      eventId={id}
+      eventName={event.name}
+      templateName={template?.name ?? ""}
+      canvasWidth={template?.canvas_width ?? 1920}
+      canvasHeight={template?.canvas_height ?? 1080}
+      publicToken={event.public_token}
+      initialActiveSlotId={event.active_slot_id}
+      slots={orderedSlots}
+      values={(values ?? []) as EventFieldValueRow[]}
+    />
+  );
+}
