@@ -52,6 +52,7 @@ export function SlotCard({
     min_font_size: slot.autofit_config.min_font_size,
     max_font_size: slot.autofit_config.max_font_size,
     title_font_size: slot.text_style.title_font_size ?? 20,
+    text_color: slot.text_style.color ?? "#ffffff",
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -86,7 +87,7 @@ export function SlotCard({
           min_font_size: form.min_font_size,
           max_font_size: form.max_font_size,
         },
-        text_style: { ...slot.text_style, title_font_size: form.title_font_size },
+        text_style: { ...slot.text_style, title_font_size: form.title_font_size, color: form.text_color },
       })
       .eq("id", slot.id)
       .select("*")
@@ -205,7 +206,7 @@ export function SlotCard({
               image_pos_y: form.image_pos_y,
               image_width: form.image_width,
               image_height: form.image_height,
-              text_style: { ...slot.text_style, title_font_size: form.title_font_size },
+              text_style: { ...slot.text_style, title_font_size: form.title_font_size, color: form.text_color },
               autofit_config: {
                 mode: form.autofit_mode,
                 min_font_size: form.min_font_size,
@@ -300,10 +301,19 @@ export function SlotCard({
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">Ajuste automático do texto</p>
+          <p className="mb-2 text-sm font-medium">Texto (título e mensagem)</p>
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Modo</Label>
+              <Label>Cor da fonte</Label>
+              <Input
+                type="color"
+                className="h-9 w-16 p-1"
+                value={form.text_color}
+                onChange={(e) => set("text_color", e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Modo de ajuste</Label>
               <Select
                 value={form.autofit_mode}
                 onValueChange={(v) => v && set("autofit_mode", v as AutofitMode)}
