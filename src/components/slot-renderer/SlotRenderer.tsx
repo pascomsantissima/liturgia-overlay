@@ -6,6 +6,8 @@ import type { AutofitConfig, TextStyle } from "@/types/database";
 
 const PADDING = 16;
 const IMAGE_GAP = 16;
+const TITLE_HEIGHT = 34;
+const TITLE_GAP = 4;
 
 export type SlotRenderField = {
   key: string;
@@ -14,6 +16,7 @@ export type SlotRenderField = {
 };
 
 export type SlotRenderData = {
+  label: string;
   pos_x: number;
   pos_y: number;
   width: number;
@@ -42,9 +45,12 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
 
   const { containerRef, textRef, fontSize } = useAutoFitText(text || " ", slot.autofit_config);
 
-  const textLeft = slot.image_url ? slot.image_pos_x + slot.image_width + IMAGE_GAP : PADDING;
-  const textWidth = Math.max(slot.width - textLeft - PADDING, 10);
-  const textHeight = Math.max(slot.height - PADDING * 2, 10);
+  const fontFamily = slot.text_style.font_family ?? "var(--font-geist-sans), Arial, sans-serif";
+  const textColor = slot.text_style.color ?? "#ffffff";
+
+  const contentLeft = slot.image_url ? slot.image_pos_x + slot.image_width + IMAGE_GAP : PADDING;
+  const contentWidth = Math.max(slot.width - contentLeft - PADDING, 10);
+  const textHeight = Math.max(slot.height - PADDING * 2 - TITLE_HEIGHT - TITLE_GAP, 10);
 
   return (
     <div
@@ -86,12 +92,43 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
       )}
 
       <div
+        style={{
+          position: "absolute",
+          left: contentLeft,
+          top: PADDING,
+          width: contentWidth,
+          height: TITLE_HEIGHT,
+          display: "flex",
+          alignItems: "center",
+          overflow: "hidden",
+        }}
+      >
+        <span
+          style={{
+            width: "100%",
+            fontFamily,
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            textTransform: "uppercase",
+            color: textColor,
+            opacity: 0.85,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {slot.label}
+        </span>
+      </div>
+
+      <div
         ref={containerRef}
         style={{
           position: "absolute",
-          left: textLeft,
-          top: PADDING,
-          width: textWidth,
+          left: contentLeft,
+          top: PADDING + TITLE_HEIGHT + TITLE_GAP,
+          width: contentWidth,
           height: textHeight,
           display: "flex",
           alignItems: "center",
@@ -102,8 +139,8 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
           style={{
             width: "100%",
             fontSize,
-            fontFamily: slot.text_style.font_family ?? "var(--font-geist-sans), sans-serif",
-            color: slot.text_style.color ?? "#ffffff",
+            fontFamily,
+            color: textColor,
             fontWeight: slot.text_style.font_weight ?? "700",
             textAlign: slot.text_style.text_align ?? "left",
             whiteSpace: slot.autofit_config.mode === "shrink-only" ? "nowrap" : "pre-wrap",

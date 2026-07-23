@@ -135,6 +135,15 @@ export function SlotCard({
     setUploading(false);
   }
 
+  function handleUseParishLogo() {
+    const size = Math.min(100, Math.max(40, form.height - 24));
+    set("image_url", "/logo.jpg");
+    set("image_pos_x", 12);
+    set("image_pos_y", Math.round((form.height - size) / 2));
+    set("image_width", size);
+    set("image_height", size);
+  }
+
   const previewFields = slot.template_slot_fields.map((f) => ({
     key: f.key,
     label: f.label,
@@ -177,6 +186,7 @@ export function SlotCard({
               height: s.height,
             }))}
             activeSlot={{
+              label: form.label,
               pos_x: form.pos_x,
               pos_y: form.pos_y,
               width: form.width,
@@ -251,6 +261,9 @@ export function SlotCard({
                 disabled={uploading}
               />
             </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleUseParishLogo}>
+              Usar logo da Pascom
+            </Button>
             {form.image_url && (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
