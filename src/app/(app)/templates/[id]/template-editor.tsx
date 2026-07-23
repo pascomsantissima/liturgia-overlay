@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -92,7 +93,7 @@ export function TemplateEditor({
     <div className="flex flex-col gap-8">
       <Card>
         <CardHeader>
-          <CardTitle>Dados do template</CardTitle>
+          <CardTitle className="font-heading">Dados do template</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveInfo} className="flex flex-wrap items-end gap-4">
@@ -117,7 +118,11 @@ export function TemplateEditor({
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" disabled={savingInfo}>
+            <Button
+              type="submit"
+              disabled={savingInfo}
+              className="brand-gradient border-0 text-white hover:opacity-90"
+            >
               {savingInfo ? "Salvando..." : "Salvar"}
             </Button>
           </form>
@@ -126,8 +131,9 @@ export function TemplateEditor({
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Momentos de exibição</h2>
+          <h2 className="font-heading text-lg font-semibold tracking-tight">Momentos de exibição</h2>
           <Button onClick={handleAddSlot} disabled={addingSlot} variant="outline">
+            <Plus className="size-4" />
             {addingSlot ? "Adicionando..." : "Adicionar momento"}
           </Button>
         </div>

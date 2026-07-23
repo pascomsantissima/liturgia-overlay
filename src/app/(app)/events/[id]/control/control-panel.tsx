@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { EyeOff, Link2, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,13 +95,16 @@ export function ControlPanel({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">{eventName}</h1>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">{eventName}</h1>
         <p className="text-sm text-muted-foreground">{templateName} · controle ao vivo</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Link do OBS (Browser Source)</CardTitle>
+          <CardTitle className="flex items-center gap-2 font-heading">
+            <Link2 className="size-4 text-primary" />
+            Link do OBS (Browser Source)
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-2">
           <code className="rounded bg-muted px-2 py-1 text-sm">{overlayUrl || "gerando..."}</code>
@@ -117,6 +121,7 @@ export function ControlPanel({
             onClick={() => handleSetActive(null)}
             disabled={switching}
           >
+            <EyeOff className="size-4" />
             Ocultar tudo
           </Button>
           {slots.map((slot) => (
@@ -125,9 +130,18 @@ export function ControlPanel({
               variant={activeSlotId === slot.id ? "default" : "outline"}
               onClick={() => handleSetActive(slot.id)}
               disabled={switching}
-              className="justify-start"
+              className={
+                activeSlotId === slot.id
+                  ? "justify-start brand-gradient border-0 text-white hover:opacity-90"
+                  : "justify-start"
+              }
             >
-              {activeSlotId === slot.id && <Badge className="mr-2">No ar</Badge>}
+              {activeSlotId === slot.id && (
+                <Badge className="mr-1 gap-1 border-0 bg-white/20 text-white">
+                  <Radio className="size-3" />
+                  No ar
+                </Badge>
+              )}
               {slot.label}
             </Button>
           ))}

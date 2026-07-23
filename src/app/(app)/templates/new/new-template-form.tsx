@@ -83,7 +83,11 @@ export function NewTemplateForm({ eventTypes }: { eventTypes: { id: string; name
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" disabled={loading} className="mt-2">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="mt-2 brand-gradient border-0 text-white hover:opacity-90"
+          >
             {loading ? "Criando..." : "Criar template"}
           </Button>
         </form>

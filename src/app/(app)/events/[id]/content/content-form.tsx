@@ -78,7 +78,7 @@ export function ContentForm({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">{eventName}</h1>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">{eventName}</h1>
         <p className="text-sm text-muted-foreground">
           {templateName} · preencha o texto de cada momento. A estrutura do template não pode ser
           alterada aqui.
@@ -89,11 +89,12 @@ export function ContentForm({
         <p className="text-sm text-muted-foreground">Este template ainda não tem momentos configurados.</p>
       ) : (
         slots.map((slot) => (
-          <Card key={slot.id}>
-            <CardHeader>
-              <CardTitle>{slot.label}</CardTitle>
+          <Card key={slot.id} className="overflow-hidden py-0">
+            <div className="brand-gradient h-1" />
+            <CardHeader className="pt-5">
+              <CardTitle className="font-heading">{slot.label}</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent className="flex flex-col gap-4 pb-5">
               {slot.template_slot_fields.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Este momento não tem campos de texto.</p>
               ) : (
@@ -123,7 +124,10 @@ export function ContentForm({
                 ))
               )}
               {slot.template_slot_fields.length > 0 && (
-                <Button onClick={() => handleSaveSlot(slot)} className="self-start">
+                <Button
+                  onClick={() => handleSaveSlot(slot)}
+                  className="self-start brand-gradient border-0 text-white hover:opacity-90"
+                >
                   Salvar {slot.label}
                 </Button>
               )}

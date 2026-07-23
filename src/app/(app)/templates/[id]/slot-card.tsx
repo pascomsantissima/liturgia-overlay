@@ -142,11 +142,12 @@ export function SlotCard({
   }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{slot.label || "Momento sem nome"}</CardTitle>
+    <Card className="overflow-hidden py-0">
+      <div className="brand-gradient h-1" />
+      <CardHeader className="pt-5">
+        <CardTitle className="font-heading">{slot.label || "Momento sem nome"}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-4 pb-5">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="flex flex-col gap-2">
             <Label>Identificador</Label>
@@ -314,7 +315,11 @@ export function SlotCard({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="brand-gradient border-0 text-white hover:opacity-90"
+          >
             {saving ? "Salvando..." : "Salvar momento"}
           </Button>
           <Button onClick={handleDelete} disabled={deleting} variant="destructive">
