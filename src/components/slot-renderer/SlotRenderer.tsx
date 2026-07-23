@@ -114,7 +114,6 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
             letterSpacing: "0.02em",
             textTransform: "uppercase",
             color: textColor,
-            opacity: 0.85,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
