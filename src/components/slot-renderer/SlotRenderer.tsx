@@ -6,8 +6,8 @@ import type { AutofitConfig, TextStyle } from "@/types/database";
 
 const PADDING = 16;
 const IMAGE_GAP = 16;
-const TITLE_HEIGHT = 34;
 const TITLE_GAP = 4;
+const DEFAULT_TITLE_FONT_SIZE = 20;
 
 export type SlotRenderField = {
   key: string;
@@ -45,12 +45,14 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
 
   const { containerRef, textRef, fontSize } = useAutoFitText(text || " ", slot.autofit_config);
 
-  const fontFamily = slot.text_style.font_family ?? "var(--font-geist-sans), Arial, sans-serif";
+  const fontFamily = slot.text_style.font_family ?? "Arial, Helvetica, sans-serif";
   const textColor = slot.text_style.color ?? "#ffffff";
+  const titleFontSize = slot.text_style.title_font_size ?? DEFAULT_TITLE_FONT_SIZE;
+  const titleHeight = Math.round(titleFontSize * 1.6);
 
   const contentLeft = slot.image_url ? slot.image_pos_x + slot.image_width + IMAGE_GAP : PADDING;
   const contentWidth = Math.max(slot.width - contentLeft - PADDING, 10);
-  const textHeight = Math.max(slot.height - PADDING * 2 - TITLE_HEIGHT - TITLE_GAP, 10);
+  const textHeight = Math.max(slot.height - PADDING * 2 - titleHeight - TITLE_GAP, 10);
 
   return (
     <div
@@ -97,7 +99,7 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
           left: contentLeft,
           top: PADDING,
           width: contentWidth,
-          height: TITLE_HEIGHT,
+          height: titleHeight,
           display: "flex",
           alignItems: "center",
           overflow: "hidden",
@@ -107,7 +109,7 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
           style={{
             width: "100%",
             fontFamily,
-            fontSize: 20,
+            fontSize: titleFontSize,
             fontWeight: 700,
             letterSpacing: "0.02em",
             textTransform: "uppercase",
@@ -127,7 +129,7 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
         style={{
           position: "absolute",
           left: contentLeft,
-          top: PADDING + TITLE_HEIGHT + TITLE_GAP,
+          top: PADDING + titleHeight + TITLE_GAP,
           width: contentWidth,
           height: textHeight,
           display: "flex",

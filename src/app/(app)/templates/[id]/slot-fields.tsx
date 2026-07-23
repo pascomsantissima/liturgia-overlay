@@ -40,7 +40,7 @@ export function SlotFields({
         template_slot_id: slotId,
         key: `campo-${nextOrder + 1}`,
         label: "Novo campo",
-        field_type: "text",
+        field_type: "textarea",
         sort_order: nextOrder,
       })
       .select("*")

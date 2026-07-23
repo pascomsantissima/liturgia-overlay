@@ -51,6 +51,7 @@ export function SlotCard({
     autofit_mode: slot.autofit_config.mode,
     min_font_size: slot.autofit_config.min_font_size,
     max_font_size: slot.autofit_config.max_font_size,
+    title_font_size: slot.text_style.title_font_size ?? 20,
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -85,6 +86,7 @@ export function SlotCard({
           min_font_size: form.min_font_size,
           max_font_size: form.max_font_size,
         },
+        text_style: { ...slot.text_style, title_font_size: form.title_font_size },
       })
       .eq("id", slot.id)
       .select("*")
@@ -162,10 +164,15 @@ export function SlotCard({
             <Label>Identificador</Label>
             <Input value={form.key} onChange={(e) => set("key", e.target.value)} />
           </div>
-          <div className="flex flex-col gap-2 sm:col-span-3">
-            <Label>Nome do momento</Label>
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <Label>Nome do momento (título fixo exibido)</Label>
             <Input value={form.label} onChange={(e) => set("label", e.target.value)} />
           </div>
+          <NumberField
+            label="Tamanho do título"
+            value={form.title_font_size}
+            onChange={(v) => set("title_font_size", v)}
+          />
         </div>
 
         <Separator />
@@ -198,7 +205,7 @@ export function SlotCard({
               image_pos_y: form.image_pos_y,
               image_width: form.image_width,
               image_height: form.image_height,
-              text_style: slot.text_style,
+              text_style: { ...slot.text_style, title_font_size: form.title_font_size },
               autofit_config: {
                 mode: form.autofit_mode,
                 min_font_size: form.min_font_size,
@@ -327,6 +334,16 @@ export function SlotCard({
           </div>
         </div>
 
+        <Separator />
+
+        <SlotFields
+          slotId={slot.id}
+          fields={slot.template_slot_fields}
+          onChange={(fields) => onUpdated({ ...slot, ...form, template_slot_fields: fields })}
+        />
+
+        <Separator />
+
         <div className="flex items-center gap-2">
           <Button
             onClick={handleSave}
@@ -339,14 +356,6 @@ export function SlotCard({
             {deleting ? "Excluindo..." : "Excluir momento"}
           </Button>
         </div>
-
-        <Separator />
-
-        <SlotFields
-          slotId={slot.id}
-          fields={slot.template_slot_fields}
-          onChange={(fields) => onUpdated({ ...slot, ...form, template_slot_fields: fields })}
-        />
       </CardContent>
     </Card>
   );
