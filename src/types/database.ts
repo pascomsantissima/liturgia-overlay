@@ -15,6 +15,7 @@ export type TextStyle = {
   font_weight?: string;
   text_align?: "left" | "center" | "right";
   title_font_size?: number;
+  title_color?: string;
 };
 
 // Nota: usar `type` (não `interface`) nos tipos abaixo é obrigatório — o

@@ -47,6 +47,7 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
 
   const fontFamily = slot.text_style.font_family ?? "Arial, Helvetica, sans-serif";
   const textColor = slot.text_style.color ?? "#ffffff";
+  const titleColor = slot.text_style.title_color ?? textColor;
   const titleFontSize = slot.text_style.title_font_size ?? DEFAULT_TITLE_FONT_SIZE;
   const titleHeight = Math.round(titleFontSize * 1.6);
 
@@ -113,7 +114,7 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
             fontWeight: 700,
             letterSpacing: "0.02em",
             textTransform: "uppercase",
-            color: textColor,
+            color: titleColor,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",

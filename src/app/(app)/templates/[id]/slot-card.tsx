@@ -52,6 +52,7 @@ export function SlotCard({
     min_font_size: slot.autofit_config.min_font_size,
     max_font_size: slot.autofit_config.max_font_size,
     title_font_size: slot.text_style.title_font_size ?? 20,
+    title_color: slot.text_style.title_color ?? slot.text_style.color ?? "#ffffff",
     text_color: slot.text_style.color ?? "#ffffff",
   });
   const [saving, setSaving] = useState(false);
@@ -87,7 +88,12 @@ export function SlotCard({
           min_font_size: form.min_font_size,
           max_font_size: form.max_font_size,
         },
-        text_style: { ...slot.text_style, title_font_size: form.title_font_size, color: form.text_color },
+        text_style: {
+          ...slot.text_style,
+          title_font_size: form.title_font_size,
+          title_color: form.title_color,
+          color: form.text_color,
+        },
       })
       .eq("id", slot.id)
       .select("*")
@@ -160,7 +166,7 @@ export function SlotCard({
         <CardTitle className="font-heading">{slot.label || "Momento sem nome"}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 pb-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
             <Label>Identificador</Label>
             <Input value={form.key} onChange={(e) => set("key", e.target.value)} />
@@ -169,11 +175,23 @@ export function SlotCard({
             <Label>Nome do momento (título fixo exibido)</Label>
             <Input value={form.label} onChange={(e) => set("label", e.target.value)} />
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-4">
           <NumberField
             label="Tamanho do título"
             value={form.title_font_size}
             onChange={(v) => set("title_font_size", v)}
           />
+          <div className="flex flex-col gap-2">
+            <Label>Cor do título</Label>
+            <Input
+              type="color"
+              className="h-9 w-16 p-1"
+              value={form.title_color}
+              onChange={(e) => set("title_color", e.target.value)}
+            />
+          </div>
         </div>
 
         <Separator />
@@ -206,7 +224,12 @@ export function SlotCard({
               image_pos_y: form.image_pos_y,
               image_width: form.image_width,
               image_height: form.image_height,
-              text_style: { ...slot.text_style, title_font_size: form.title_font_size, color: form.text_color },
+              text_style: {
+                ...slot.text_style,
+                title_font_size: form.title_font_size,
+                title_color: form.title_color,
+                color: form.text_color,
+              },
               autofit_config: {
                 mode: form.autofit_mode,
                 min_font_size: form.min_font_size,
@@ -301,10 +324,10 @@ export function SlotCard({
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">Texto (título e mensagem)</p>
+          <p className="mb-2 text-sm font-medium">Mensagem</p>
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Cor da fonte</Label>
+              <Label>Cor da mensagem</Label>
               <Input
                 type="color"
                 className="h-9 w-16 p-1"
