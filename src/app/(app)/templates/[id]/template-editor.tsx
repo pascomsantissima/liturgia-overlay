@@ -40,6 +40,7 @@ export function TemplateEditor({
   const [slots, setSlots] = useState(initialSlots);
   const [savingInfo, setSavingInfo] = useState(false);
   const [addingSlot, setAddingSlot] = useState(false);
+  const [baseSlotId, setBaseSlotId] = useState<string | null>(null);
   const addingSlotRef = useRef(false);
 
   async function handleSaveInfo(event: FormEvent) {
@@ -66,6 +67,8 @@ export function TemplateEditor({
     setAddingSlot(true);
     const supabase = createClient();
     const nextOrder = slots.length;
+    const baseSlot = slots.find((s) => s.id === baseSlotId) ?? null;
+
     const { data, error } = await supabase
       .from("template_slots")
       .insert({
@@ -73,18 +76,68 @@ export function TemplateEditor({
         key: `momento-${nextOrder + 1}`,
         label: "Novo momento",
         sort_order: nextOrder,
+        ...(baseSlot && {
+          pos_x: baseSlot.pos_x,
+          pos_y: baseSlot.pos_y,
+          width: baseSlot.width,
+          height: baseSlot.height,
+          bg_color: baseSlot.bg_color,
+          bg_opacity: baseSlot.bg_opacity,
+          bg_gradient_to: baseSlot.bg_gradient_to,
+          bg_gradient_direction: baseSlot.bg_gradient_direction,
+          title_editable: baseSlot.title_editable,
+          image_url: baseSlot.image_url,
+          image_pos_x: baseSlot.image_pos_x,
+          image_pos_y: baseSlot.image_pos_y,
+          image_width: baseSlot.image_width,
+          image_height: baseSlot.image_height,
+          text_style: baseSlot.text_style,
+          autofit_config: baseSlot.autofit_config,
+        }),
       })
       .select("*")
       .single();
-    addingSlotRef.current = false;
-    setAddingSlot(false);
 
     if (error || !data) {
+      addingSlotRef.current = false;
+      setAddingSlot(false);
       toast.error("Não foi possível adicionar o momento", { description: error?.message });
       return;
     }
 
-    setSlots((prev) => [...prev, { ...data, template_slot_fields: [] }]);
+    let clonedFields: SlotWithFields["template_slot_fields"] = [];
+    if (baseSlot && baseSlot.template_slot_fields.length > 0) {
+      const { data: fieldsData, error: fieldsError } = await supabase
+        .from("template_slot_fields")
+        .insert(
+          baseSlot.template_slot_fields.map((f) => ({
+            template_slot_id: data.id,
+            key: f.key,
+            label: f.label,
+            field_type: f.field_type,
+            max_length: f.max_length,
+            required: f.required,
+            sort_order: f.sort_order,
+            bg_color: f.bg_color,
+            bg_opacity: f.bg_opacity,
+            bg_gradient_to: f.bg_gradient_to,
+            bg_gradient_direction: f.bg_gradient_direction,
+          })),
+        )
+        .select("*");
+
+      if (fieldsError) {
+        toast.error("Momento criado, mas não foi possível copiar os campos", {
+          description: fieldsError.message,
+        });
+      } else {
+        clonedFields = fieldsData ?? [];
+      }
+    }
+
+    addingSlotRef.current = false;
+    setAddingSlot(false);
+    setSlots((prev) => [...prev, { ...data, template_slot_fields: clonedFields }]);
   }
 
   function handleSlotDeleted(slotId: string) {
@@ -138,10 +191,41 @@ export function TemplateEditor({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-lg font-semibold tracking-tight">Momentos de exibição</h2>
-          <Button onClick={handleAddSlot} disabled={addingSlot} variant="outline">
-            <Plus className="size-4" />
-            {addingSlot ? "Adicionando..." : "Adicionar momento"}
-          </Button>
+          <div className="flex items-end gap-2">
+            {slots.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <Label className="text-xs text-muted-foreground">
+                  Basear posição, cores e campos em
+                </Label>
+                <Select
+                  value={baseSlotId ?? "none"}
+                  onValueChange={(v) => setBaseSlotId(v === "none" ? null : v)}
+                >
+                  <SelectTrigger className="w-56">
+                    <SelectValue>
+                      {(value: string | null) =>
+                        value && value !== "none"
+                          ? (slots.find((s) => s.id === value)?.label ?? "Em branco")
+                          : "Em branco"
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Em branco</SelectItem>
+                    {slots.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Button onClick={handleAddSlot} disabled={addingSlot} variant="outline">
+              <Plus className="size-4" />
+              {addingSlot ? "Adicionando..." : "Adicionar momento"}
+            </Button>
+          </div>
         </div>
 
         {slots.length === 0 ? (
