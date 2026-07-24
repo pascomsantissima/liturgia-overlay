@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ContentForm } from "./content-form";
-import type { EventFieldValueRow, SlotWithFields } from "./types";
+import type { EventFieldValueRow, EventSlotTitleRow, SlotWithFields } from "./types";
 
 export default async function EventContentPage({
   params,
@@ -30,6 +30,11 @@ export default async function EventContentPage({
     .select("*")
     .eq("live_event_id", id);
 
+  const { data: titleOverrides } = await supabase
+    .from("event_slot_titles")
+    .select("*")
+    .eq("live_event_id", id);
+
   const orderedSlots = ((slots ?? []) as unknown as SlotWithFields[]).map((s) => ({
     ...s,
     template_slot_fields: [...s.template_slot_fields].sort((a, b) => a.sort_order - b.sort_order),
@@ -42,6 +47,7 @@ export default async function EventContentPage({
       templateName={(event.templates as unknown as { name: string } | null)?.name ?? ""}
       slots={orderedSlots}
       initialValues={(values ?? []) as EventFieldValueRow[]}
+      initialTitleOverrides={(titleOverrides ?? []) as EventSlotTitleRow[]}
     />
   );
 }

@@ -2,6 +2,7 @@ export type ProfileRole = "admin" | "operator";
 export type EventStatus = "draft" | "live" | "archived";
 export type FieldType = "text" | "textarea";
 export type AutofitMode = "shrink-only" | "shrink-and-wrap";
+export type GradientDirection = "horizontal" | "vertical";
 
 export type AutofitConfig = {
   mode: AutofitMode;
@@ -16,6 +17,14 @@ export type TextStyle = {
   text_align?: "left" | "center" | "right";
   title_font_size?: number;
   title_color?: string;
+};
+
+/** Cor de fundo sólida ou gradiente de uma linha (título ou um campo). */
+export type LineBackground = {
+  bg_color: string;
+  bg_opacity: number;
+  bg_gradient_to: string | null;
+  bg_gradient_direction: GradientDirection;
 };
 
 // Nota: usar `type` (não `interface`) nos tipos abaixo é obrigatório — o
@@ -59,6 +68,9 @@ export type TemplateSlotRow = {
   height: number;
   bg_color: string;
   bg_opacity: number;
+  bg_gradient_to: string | null;
+  bg_gradient_direction: GradientDirection;
+  title_editable: boolean;
   image_url: string | null;
   image_pos_x: number;
   image_pos_y: number;
@@ -79,6 +91,10 @@ export type TemplateSlotFieldRow = {
   max_length: number | null;
   required: boolean;
   sort_order: number;
+  bg_color: string;
+  bg_opacity: number;
+  bg_gradient_to: string | null;
+  bg_gradient_direction: GradientDirection;
 };
 
 export type LiveEventRow = {
@@ -103,28 +119,42 @@ export type EventFieldValueRow = {
   updated_at: string;
 };
 
+export type EventSlotTitleRow = {
+  id: string;
+  live_event_id: string;
+  template_slot_id: string;
+  title: string;
+  updated_by: string | null;
+  updated_at: string;
+};
+
 export type PublicEventSnapshot = {
   event: { id: string; name: string; status: EventStatus };
   canvas: { width: number; height: number };
-  active_slot: {
-    id: string;
-    key: string;
-    label: string;
-    pos_x: number;
-    pos_y: number;
-    width: number;
-    height: number;
-    bg_color: string;
-    bg_opacity: number;
-    image_url: string | null;
-    image_pos_x: number;
-    image_pos_y: number;
-    image_width: number;
-    image_height: number;
-    text_style: TextStyle;
-    autofit_config: AutofitConfig;
-    fields: { key: string; label: string; field_type: FieldType; value: string }[];
-  } | null;
+  active_slot:
+    | (LineBackground & {
+        id: string;
+        key: string;
+        label: string;
+        pos_x: number;
+        pos_y: number;
+        width: number;
+        height: number;
+        image_url: string | null;
+        image_pos_x: number;
+        image_pos_y: number;
+        image_width: number;
+        image_height: number;
+        text_style: TextStyle;
+        autofit_config: AutofitConfig;
+        fields: (LineBackground & {
+          key: string;
+          label: string;
+          field_type: FieldType;
+          value: string;
+        })[];
+      })
+    | null;
 };
 
 type TableDef<Row, Insert, Update> = {
@@ -163,6 +193,11 @@ export type Database = {
         EventFieldValueRow,
         { live_event_id: string; template_slot_field_id: string } & Partial<EventFieldValueRow>,
         Partial<EventFieldValueRow>
+      >;
+      event_slot_titles: TableDef<
+        EventSlotTitleRow,
+        { live_event_id: string; template_slot_id: string } & Partial<EventSlotTitleRow>,
+        Partial<EventSlotTitleRow>
       >;
     };
     Views: Record<string, never>;

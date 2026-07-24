@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { EventFieldValueRow, SlotWithFields } from "./types";
+import type { EventFieldValueRow, EventSlotTitleRow, SlotWithFields } from "./types";
 
 export function ContentForm({
   eventId,
@@ -16,17 +16,28 @@ export function ContentForm({
   templateName,
   slots,
   initialValues,
+  initialTitleOverrides,
 }: {
   eventId: string;
   eventName: string;
   templateName: string;
   slots: SlotWithFields[];
   initialValues: EventFieldValueRow[];
+  initialTitleOverrides: EventSlotTitleRow[];
 }) {
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(initialValues.map((v) => [v.template_slot_field_id, v.value])),
   );
+  const [titles, setTitles] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      slots.map((s) => [
+        s.id,
+        initialTitleOverrides.find((t) => t.template_slot_id === s.id)?.title || s.label,
+      ]),
+    ),
+  );
   const dirtyRef = useRef<Set<string>>(new Set());
+  const dirtyTitleRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const supabase = createClient();
@@ -42,6 +53,16 @@ export function ContentForm({
           setValues((prev) => ({ ...prev, [row.template_slot_field_id]: row.value }));
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "event_slot_titles", filter: `live_event_id=eq.${eventId}` },
+        (payload) => {
+          const row = payload.new as EventSlotTitleRow | undefined;
+          if (!row) return;
+          if (dirtyTitleRef.current.has(row.template_slot_id)) return;
+          setTitles((prev) => ({ ...prev, [row.template_slot_id]: row.title }));
+        },
+      )
       .subscribe();
 
     return () => {
@@ -54,6 +75,11 @@ export function ContentForm({
     setValues((prev) => ({ ...prev, [fieldId]: value }));
   }
 
+  function handleTitleChange(slotId: string, value: string) {
+    dirtyTitleRef.current.add(slotId);
+    setTitles((prev) => ({ ...prev, [slotId]: value }));
+  }
+
   async function handleSaveSlot(slot: SlotWithFields) {
     const supabase = createClient();
     const rows = slot.template_slot_fields.map((field) => ({
@@ -62,16 +88,33 @@ export function ContentForm({
       value: values[field.id] ?? "",
     }));
 
-    const { error } = await supabase
-      .from("event_field_values")
-      .upsert(rows, { onConflict: "live_event_id,template_slot_field_id" });
+    if (rows.length > 0) {
+      const { error } = await supabase
+        .from("event_field_values")
+        .upsert(rows, { onConflict: "live_event_id,template_slot_field_id" });
 
-    if (error) {
-      toast.error("Não foi possível salvar", { description: error.message });
-      return;
+      if (error) {
+        toast.error("Não foi possível salvar", { description: error.message });
+        return;
+      }
+      slot.template_slot_fields.forEach((f) => dirtyRef.current.delete(f.id));
     }
 
-    slot.template_slot_fields.forEach((f) => dirtyRef.current.delete(f.id));
+    if (slot.title_editable) {
+      const { error: titleError } = await supabase
+        .from("event_slot_titles")
+        .upsert(
+          { live_event_id: eventId, template_slot_id: slot.id, title: titles[slot.id] ?? slot.label },
+          { onConflict: "live_event_id,template_slot_id" },
+        );
+
+      if (titleError) {
+        toast.error("Não foi possível salvar o título", { description: titleError.message });
+        return;
+      }
+      dirtyTitleRef.current.delete(slot.id);
+    }
+
     toast.success(`"${slot.label}" salvo`);
   }
 
@@ -95,6 +138,16 @@ export function ContentForm({
               <CardTitle className="font-heading">{slot.label}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 pb-5">
+              {slot.title_editable && (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor={`title-${slot.id}`}>Título (pode ser alterado neste evento)</Label>
+                  <Input
+                    id={`title-${slot.id}`}
+                    value={titles[slot.id] ?? slot.label}
+                    onChange={(e) => handleTitleChange(slot.id, e.target.value)}
+                  />
+                </div>
+              )}
               {slot.template_slot_fields.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Este momento não tem campos de texto.</p>
               ) : (
@@ -123,7 +176,7 @@ export function ContentForm({
                   </div>
                 ))
               )}
-              {slot.template_slot_fields.length > 0 && (
+              {(slot.template_slot_fields.length > 0 || slot.title_editable) && (
                 <Button
                   onClick={() => handleSaveSlot(slot)}
                   className="self-start brand-gradient border-0 text-white hover:opacity-90"

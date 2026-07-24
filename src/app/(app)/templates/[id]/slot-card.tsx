@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -17,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SlotFields } from "./slot-fields";
 import { SlotCanvasEditor, type CanvasBox } from "@/components/canvas/SlotCanvasEditor";
-import type { AutofitMode, SlotWithFields } from "./types";
+import type { AutofitMode, GradientDirection, SlotWithFields } from "./types";
 
 export function SlotCard({
   slot,
@@ -43,6 +44,9 @@ export function SlotCard({
     height: slot.height,
     bg_color: slot.bg_color,
     bg_opacity: slot.bg_opacity,
+    bg_gradient_to: slot.bg_gradient_to ?? "",
+    bg_gradient_direction: slot.bg_gradient_direction,
+    title_editable: slot.title_editable,
     image_url: slot.image_url,
     image_pos_x: slot.image_pos_x,
     image_pos_y: slot.image_pos_y,
@@ -78,6 +82,9 @@ export function SlotCard({
         height: form.height,
         bg_color: form.bg_color,
         bg_opacity: form.bg_opacity,
+        bg_gradient_to: form.bg_gradient_to || null,
+        bg_gradient_direction: form.bg_gradient_direction,
+        title_editable: form.title_editable,
         image_url: form.image_url,
         image_pos_x: form.image_pos_x,
         image_pos_y: form.image_pos_y,
@@ -157,6 +164,10 @@ export function SlotCard({
     key: f.key,
     label: f.label,
     value: f.label,
+    bg_color: f.bg_color,
+    bg_opacity: f.bg_opacity,
+    bg_gradient_to: f.bg_gradient_to,
+    bg_gradient_direction: f.bg_gradient_direction,
   }));
 
   return (
@@ -172,10 +183,18 @@ export function SlotCard({
             <Input value={form.key} onChange={(e) => set("key", e.target.value)} />
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
-            <Label>Nome do momento (título fixo exibido)</Label>
+            <Label>Nome do momento (título)</Label>
             <Input value={form.label} onChange={(e) => set("label", e.target.value)} />
           </div>
         </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={form.title_editable}
+            onCheckedChange={(v) => set("title_editable", v === true)}
+          />
+          Permitir que o operador altere o título ao preencher o evento
+        </label>
 
         <div className="flex flex-wrap items-end gap-4">
           <NumberField
@@ -219,6 +238,8 @@ export function SlotCard({
               height: form.height,
               bg_color: form.bg_color,
               bg_opacity: form.bg_opacity,
+              bg_gradient_to: form.bg_gradient_to || null,
+              bg_gradient_direction: form.bg_gradient_direction,
               image_url: form.image_url,
               image_pos_x: form.image_pos_x,
               image_pos_y: form.image_pos_y,
@@ -235,7 +256,20 @@ export function SlotCard({
                 min_font_size: form.min_font_size,
                 max_font_size: form.max_font_size,
               },
-              fields: previewFields.length > 0 ? previewFields : [{ key: "preview", label: "", value: form.label }],
+              fields:
+                previewFields.length > 0
+                  ? previewFields
+                  : [
+                      {
+                        key: "preview",
+                        label: "",
+                        value: form.label,
+                        bg_color: "#000000",
+                        bg_opacity: 1,
+                        bg_gradient_to: null,
+                        bg_gradient_direction: "horizontal" as GradientDirection,
+                      },
+                    ],
             }}
             onChange={(box: CanvasBox) => {
               set("pos_x", Math.round(box.pos_x));
@@ -253,10 +287,10 @@ export function SlotCard({
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">Cor de fundo</p>
-          <div className="flex items-end gap-4">
+          <p className="mb-2 text-sm font-medium">Fundo do título</p>
+          <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Cor</Label>
+              <Label>{form.bg_gradient_to ? "Cor inicial" : "Cor"}</Label>
               <Input
                 type="color"
                 className="h-9 w-16 p-1"
@@ -272,6 +306,47 @@ export function SlotCard({
               max={1}
               onChange={(v) => set("bg_opacity", v)}
             />
+            <label className="flex items-center gap-2 pb-2 text-sm">
+              <Checkbox
+                checked={form.bg_gradient_to !== ""}
+                onCheckedChange={(v) =>
+                  set("bg_gradient_to", v === true ? form.bg_color : "")
+                }
+              />
+              Gradiente
+            </label>
+            {form.bg_gradient_to !== "" && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <Label>Cor final</Label>
+                  <Input
+                    type="color"
+                    className="h-9 w-16 p-1"
+                    value={form.bg_gradient_to}
+                    onChange={(e) => set("bg_gradient_to", e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Direção</Label>
+                  <Select
+                    value={form.bg_gradient_direction}
+                    onValueChange={(v) => v && set("bg_gradient_direction", v as GradientDirection)}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue>
+                        {(value: GradientDirection | null) =>
+                          value === "vertical" ? "Vertical" : "Horizontal"
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="horizontal">Horizontal</SelectItem>
+                      <SelectItem value="vertical">Vertical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

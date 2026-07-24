@@ -14,3 +14,21 @@ export function hexToRgba(hex: string, opacity: number): string {
 
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
+
+/** Estilo de fundo (sólido ou gradiente) de uma linha (título ou campo). */
+export function lineBackgroundStyle(line: {
+  bg_color: string;
+  bg_opacity: number;
+  bg_gradient_to?: string | null;
+  bg_gradient_direction?: "horizontal" | "vertical";
+}): { backgroundColor: string } | { backgroundImage: string } {
+  if (!line.bg_gradient_to) {
+    return { backgroundColor: hexToRgba(line.bg_color, line.bg_opacity) };
+  }
+
+  const from = hexToRgba(line.bg_color, line.bg_opacity);
+  const to = hexToRgba(line.bg_gradient_to, line.bg_opacity);
+  const angle = line.bg_gradient_direction === "vertical" ? "to bottom" : "to right";
+
+  return { backgroundImage: `linear-gradient(${angle}, ${from}, ${to})` };
+}

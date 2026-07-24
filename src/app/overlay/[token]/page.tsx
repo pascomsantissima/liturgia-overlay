@@ -52,7 +52,15 @@ export default function OverlayPage({ params }: { params: Promise<{ token: strin
           <SlotRenderer
             slot={{
               ...slot,
-              fields: slot.fields.map((f) => ({ key: f.key, label: f.label, value: f.value })),
+              fields: slot.fields.map((f) => ({
+                key: f.key,
+                label: f.label,
+                value: f.value,
+                bg_color: f.bg_color,
+                bg_opacity: f.bg_opacity,
+                bg_gradient_to: f.bg_gradient_to,
+                bg_gradient_direction: f.bg_gradient_direction,
+              })),
             }}
           />
         )}

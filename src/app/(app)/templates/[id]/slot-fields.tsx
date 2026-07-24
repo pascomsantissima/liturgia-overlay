@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { FieldType, SlotField } from "./types";
+import type { FieldType, GradientDirection, SlotField } from "./types";
 
 export function SlotFields({
   slotId,
@@ -71,6 +71,9 @@ export function SlotFields({
           {adding ? "Adicionando..." : "Adicionar campo"}
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Cada campo é uma linha independente na exibição, com sua própria cor de fundo (ou gradiente).
+      </p>
 
       {fields.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -84,6 +87,9 @@ export function SlotFields({
               <TableHead>Rótulo</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Obrigatório</TableHead>
+              <TableHead>Cor</TableHead>
+              <TableHead>Opacidade</TableHead>
+              <TableHead>Gradiente</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -116,17 +122,39 @@ function FieldRow({
   const [label, setLabel] = useState(field.label);
   const [fieldType, setFieldType] = useState<FieldType>(field.field_type);
   const [required, setRequired] = useState(field.required);
+  const [bgColor, setBgColor] = useState(field.bg_color);
+  const [bgOpacity, setBgOpacity] = useState(field.bg_opacity);
+  const [gradientTo, setGradientTo] = useState(field.bg_gradient_to ?? "");
+  const [gradientDirection, setGradientDirection] = useState<GradientDirection>(
+    field.bg_gradient_direction,
+  );
   const [saving, setSaving] = useState(false);
 
   const dirty =
-    key !== field.key || label !== field.label || fieldType !== field.field_type || required !== field.required;
+    key !== field.key ||
+    label !== field.label ||
+    fieldType !== field.field_type ||
+    required !== field.required ||
+    bgColor !== field.bg_color ||
+    bgOpacity !== field.bg_opacity ||
+    gradientTo !== (field.bg_gradient_to ?? "") ||
+    gradientDirection !== field.bg_gradient_direction;
 
   async function handleSave() {
     setSaving(true);
     const supabase = createClient();
     const { data, error } = await supabase
       .from("template_slot_fields")
-      .update({ key, label, field_type: fieldType, required })
+      .update({
+        key,
+        label,
+        field_type: fieldType,
+        required,
+        bg_color: bgColor,
+        bg_opacity: bgOpacity,
+        bg_gradient_to: gradientTo || null,
+        bg_gradient_direction: gradientDirection,
+      })
       .eq("id", field.id)
       .select("*")
       .single();
@@ -173,6 +201,59 @@ function FieldRow({
       </TableCell>
       <TableCell>
         <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="color"
+          className="h-8 w-12 p-1"
+          value={bgColor}
+          onChange={(e) => setBgColor(e.target.value)}
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          step={0.05}
+          min={0}
+          max={1}
+          className="h-8 w-20"
+          value={bgOpacity}
+          onChange={(e) => setBgOpacity(Number(e.target.value))}
+        />
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={gradientTo !== ""}
+            onCheckedChange={(v) => setGradientTo(v === true ? bgColor : "")}
+          />
+          {gradientTo !== "" && (
+            <>
+              <Input
+                type="color"
+                className="h-8 w-12 p-1"
+                value={gradientTo}
+                onChange={(e) => setGradientTo(e.target.value)}
+              />
+              <Select
+                value={gradientDirection}
+                onValueChange={(v) => v && setGradientDirection(v as GradientDirection)}
+              >
+                <SelectTrigger className="h-8 w-28">
+                  <SelectValue>
+                    {(value: GradientDirection | null) =>
+                      value === "vertical" ? "Vertical" : "Horizontal"
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horizontal">Horizontal</SelectItem>
+                  <SelectItem value="vertical">Vertical</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          )}
+        </div>
       </TableCell>
       <TableCell className="flex gap-2">
         {dirty && (

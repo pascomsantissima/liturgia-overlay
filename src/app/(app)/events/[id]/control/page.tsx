@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ControlPanel } from "./control-panel";
-import type { EventFieldValueRow, SlotWithFields } from "../content/types";
+import type { EventFieldValueRow, EventSlotTitleRow, SlotWithFields } from "../content/types";
 
 export default async function EventControlPage({
   params,
@@ -30,6 +30,11 @@ export default async function EventControlPage({
     .select("*")
     .eq("live_event_id", id);
 
+  const { data: titleOverrides } = await supabase
+    .from("event_slot_titles")
+    .select("*")
+    .eq("live_event_id", id);
+
   const template = event.templates as unknown as {
     name: string;
     canvas_width: number;
@@ -52,6 +57,7 @@ export default async function EventControlPage({
       initialActiveSlotId={event.active_slot_id}
       slots={orderedSlots}
       values={(values ?? []) as EventFieldValueRow[]}
+      titleOverrides={(titleOverrides ?? []) as EventSlotTitleRow[]}
     />
   );
 }

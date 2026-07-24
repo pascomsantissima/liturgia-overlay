@@ -1,28 +1,25 @@
 "use client";
 
 import { useAutoFitText } from "@/hooks/useAutoFitText";
-import { hexToRgba } from "@/lib/color";
-import type { AutofitConfig, TextStyle } from "@/types/database";
+import { lineBackgroundStyle } from "@/lib/color";
+import type { AutofitConfig, LineBackground, TextStyle } from "@/types/database";
 
 const PADDING = 16;
 const IMAGE_GAP = 16;
-const TITLE_GAP = 4;
 const DEFAULT_TITLE_FONT_SIZE = 20;
 
-export type SlotRenderField = {
+export type SlotRenderField = LineBackground & {
   key: string;
   label: string;
   value: string;
 };
 
-export type SlotRenderData = {
+export type SlotRenderData = LineBackground & {
   label: string;
   pos_x: number;
   pos_y: number;
   width: number;
   height: number;
-  bg_color: string;
-  bg_opacity: number;
   image_url: string | null;
   image_pos_x: number;
   image_pos_y: number;
@@ -38,13 +35,6 @@ export type SlotRenderData = {
  * usado quando um container externo (ex: react-rnd) já controla a posição/tamanho.
  */
 export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; absolute?: boolean }) {
-  const text = slot.fields
-    .map((f) => f.value)
-    .filter(Boolean)
-    .join("\n");
-
-  const { containerRef, textRef, fontSize } = useAutoFitText(text || " ", slot.autofit_config);
-
   const fontFamily = slot.text_style.font_family ?? "Arial, Helvetica, sans-serif";
   const textColor = slot.text_style.color ?? "#ffffff";
   const titleColor = slot.text_style.title_color ?? textColor;
@@ -53,7 +43,8 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
 
   const contentLeft = slot.image_url ? slot.image_pos_x + slot.image_width + IMAGE_GAP : PADDING;
   const contentWidth = Math.max(slot.width - contentLeft - PADDING, 10);
-  const textHeight = Math.max(slot.height - PADDING * 2 - titleHeight - TITLE_GAP, 10);
+  const fieldsAreaHeight = Math.max(slot.height - titleHeight, 0);
+  const fieldHeight = slot.fields.length > 0 ? fieldsAreaHeight / slot.fields.length : 0;
 
   return (
     <div
@@ -73,32 +64,18 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
       <div
         style={{
           position: "absolute",
-          inset: 0,
-          backgroundColor: hexToRgba(slot.bg_color, slot.bg_opacity),
+          left: 0,
+          top: 0,
+          width: slot.width,
+          height: titleHeight,
+          ...lineBackgroundStyle(slot),
         }}
       />
-
-      {slot.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={slot.image_url}
-          alt=""
-          style={{
-            position: "absolute",
-            left: slot.image_pos_x,
-            top: slot.image_pos_y,
-            width: slot.image_width,
-            height: slot.image_height,
-            objectFit: "contain",
-          }}
-        />
-      )}
-
       <div
         style={{
           position: "absolute",
           left: contentLeft,
-          top: PADDING,
+          top: 0,
           width: contentWidth,
           height: titleHeight,
           display: "flex",
@@ -124,12 +101,85 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
         </span>
       </div>
 
+      {slot.fields.map((field, index) => (
+        <FieldLine
+          key={field.key}
+          field={field}
+          top={titleHeight + index * fieldHeight}
+          height={fieldHeight}
+          contentLeft={contentLeft}
+          contentWidth={contentWidth}
+          fullWidth={slot.width}
+          fontFamily={fontFamily}
+          textColor={textColor}
+          textStyle={slot.text_style}
+          autofitConfig={slot.autofit_config}
+        />
+      ))}
+
+      {slot.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={slot.image_url}
+          alt=""
+          style={{
+            position: "absolute",
+            left: slot.image_pos_x,
+            top: slot.image_pos_y,
+            width: slot.image_width,
+            height: slot.image_height,
+            objectFit: "contain",
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function FieldLine({
+  field,
+  top,
+  height,
+  contentLeft,
+  contentWidth,
+  fullWidth,
+  fontFamily,
+  textColor,
+  textStyle,
+  autofitConfig,
+}: {
+  field: SlotRenderField;
+  top: number;
+  height: number;
+  contentLeft: number;
+  contentWidth: number;
+  fullWidth: number;
+  fontFamily: string;
+  textColor: string;
+  textStyle: TextStyle;
+  autofitConfig: AutofitConfig;
+}) {
+  const { containerRef, textRef, fontSize } = useAutoFitText(field.value || " ", autofitConfig);
+  const textHeight = Math.max(height - PADDING, 10);
+
+  return (
+    <>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top,
+          width: fullWidth,
+          height,
+          ...lineBackgroundStyle(field),
+        }}
+      />
       <div
         ref={containerRef}
         style={{
           position: "absolute",
           left: contentLeft,
-          top: PADDING + titleHeight + TITLE_GAP,
+          top: top + PADDING / 2,
           width: contentWidth,
           height: textHeight,
           display: "flex",
@@ -143,16 +193,16 @@ export function SlotRenderer({ slot, absolute = true }: { slot: SlotRenderData; 
             fontSize,
             fontFamily,
             color: textColor,
-            fontWeight: slot.text_style.font_weight ?? "700",
-            textAlign: slot.text_style.text_align ?? "left",
-            whiteSpace: slot.autofit_config.mode === "shrink-only" ? "nowrap" : "pre-wrap",
-            overflowWrap: slot.autofit_config.mode === "shrink-and-wrap" ? "anywhere" : "normal",
+            fontWeight: textStyle.font_weight ?? "700",
+            textAlign: textStyle.text_align ?? "left",
+            whiteSpace: autofitConfig.mode === "shrink-only" ? "nowrap" : "pre-wrap",
+            overflowWrap: autofitConfig.mode === "shrink-and-wrap" ? "anywhere" : "normal",
             lineHeight: 1.2,
           }}
         >
-          {text}
+          {field.value}
         </div>
       </div>
-    </div>
+    </>
   );
 }

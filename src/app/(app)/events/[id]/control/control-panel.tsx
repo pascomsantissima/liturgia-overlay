@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CanvasStage } from "@/components/canvas/CanvasStage";
 import { SlotRenderer } from "@/components/slot-renderer/SlotRenderer";
-import type { EventFieldValueRow, SlotWithFields } from "../content/types";
+import type { EventFieldValueRow, EventSlotTitleRow, SlotWithFields } from "../content/types";
 
 export function ControlPanel({
   eventId,
@@ -21,6 +21,7 @@ export function ControlPanel({
   initialActiveSlotId,
   slots,
   values: initialValues,
+  titleOverrides: initialTitleOverrides,
 }: {
   eventId: string;
   eventName: string;
@@ -31,10 +32,14 @@ export function ControlPanel({
   initialActiveSlotId: string | null;
   slots: SlotWithFields[];
   values: EventFieldValueRow[];
+  titleOverrides: EventSlotTitleRow[];
 }) {
   const [activeSlotId, setActiveSlotId] = useState(initialActiveSlotId);
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(initialValues.map((v) => [v.template_slot_field_id, v.value])),
+  );
+  const [titleOverrides, setTitleOverrides] = useState<Record<string, string>>(() =>
+    Object.fromEntries(initialTitleOverrides.map((t) => [t.template_slot_id, t.title])),
   );
   const [overlayUrl] = useState(() =>
     typeof window !== "undefined" ? `${window.location.origin}/overlay/${publicToken}` : "",
@@ -60,6 +65,15 @@ export function ControlPanel({
           const row = payload.new as EventFieldValueRow | undefined;
           if (!row) return;
           setValues((prev) => ({ ...prev, [row.template_slot_field_id]: row.value }));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "event_slot_titles", filter: `live_event_id=eq.${eventId}` },
+        (payload) => {
+          const row = payload.new as EventSlotTitleRow | undefined;
+          if (!row) return;
+          setTitleOverrides((prev) => ({ ...prev, [row.template_slot_id]: row.title }));
         },
       )
       .subscribe();
@@ -88,6 +102,10 @@ export function ControlPanel({
   async function handleCopyUrl() {
     await navigator.clipboard.writeText(overlayUrl);
     toast.success("Link copiado");
+  }
+
+  function effectiveLabel(slot: SlotWithFields) {
+    return titleOverrides[slot.id]?.trim() || slot.label;
   }
 
   const activeSlot = slots.find((s) => s.id === activeSlotId);
@@ -142,7 +160,7 @@ export function ControlPanel({
                   No ar
                 </Badge>
               )}
-              {slot.label}
+              {effectiveLabel(slot)}
             </Button>
           ))}
           {slots.length === 0 && (
@@ -162,10 +180,15 @@ export function ControlPanel({
                 <SlotRenderer
                   slot={{
                     ...activeSlot,
+                    label: effectiveLabel(activeSlot),
                     fields: activeSlot.template_slot_fields.map((f) => ({
                       key: f.key,
                       label: f.label,
                       value: values[f.id] ?? "",
+                      bg_color: f.bg_color,
+                      bg_opacity: f.bg_opacity,
+                      bg_gradient_to: f.bg_gradient_to,
+                      bg_gradient_direction: f.bg_gradient_direction,
                     })),
                   }}
                 />

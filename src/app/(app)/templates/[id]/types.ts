@@ -2,6 +2,8 @@ import type {
   AutofitConfig,
   AutofitMode,
   FieldType,
+  GradientDirection,
+  LineBackground,
   TemplateSlotFieldRow,
   TemplateSlotRow,
   TextStyle,
@@ -22,4 +24,4 @@ export type TemplateWithType = {
   event_types: { name: string } | null;
 };
 
-export type { AutofitConfig, AutofitMode, FieldType, TextStyle };
+export type { AutofitConfig, AutofitMode, FieldType, GradientDirection, LineBackground, TextStyle };
