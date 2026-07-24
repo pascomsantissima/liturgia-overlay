@@ -6,18 +6,24 @@ import { SlotRenderer, type SlotRenderData } from "@/components/slot-renderer/Sl
 
 export type CanvasBox = { pos_x: number; pos_y: number; width: number; height: number };
 
+export type CanvasImage = CanvasBox & { id: string; image_url: string };
+
 export function SlotCanvasEditor({
   canvasWidth,
   canvasHeight,
   otherSlots,
   activeSlot,
+  images,
   onChange,
+  onImageChange,
 }: {
   canvasWidth: number;
   canvasHeight: number;
   otherSlots: (CanvasBox & { label: string })[];
   activeSlot: SlotRenderData;
+  images: CanvasImage[];
   onChange: (box: CanvasBox) => void;
+  onImageChange: (id: string, box: CanvasBox) => void;
 }) {
   return (
     <CanvasStage width={canvasWidth} height={canvasHeight} className="overflow-hidden rounded-md border bg-[repeating-conic-gradient(#374151_0%_25%,#1f2937_0%_50%)] bg-[length:32px_32px]">
@@ -37,6 +43,36 @@ export function SlotCanvasEditor({
             >
               <span className="absolute -top-5 left-0 text-[11px] text-white/70">{slot.label}</span>
             </div>
+          ))}
+
+          {images.map((img) => (
+            <Rnd
+              key={img.id}
+              bounds="parent"
+              scale={scale}
+              position={{ x: img.pos_x, y: img.pos_y }}
+              size={{ width: img.width, height: img.height }}
+              onDragStop={(_e, d) => {
+                onImageChange(img.id, {
+                  pos_x: Math.round(d.x),
+                  pos_y: Math.round(d.y),
+                  width: img.width,
+                  height: img.height,
+                });
+              }}
+              onResizeStop={(_e, _dir, ref, _delta, position) => {
+                onImageChange(img.id, {
+                  pos_x: Math.round(position.x),
+                  pos_y: Math.round(position.y),
+                  width: Math.round(parseInt(ref.style.width, 10)),
+                  height: Math.round(parseInt(ref.style.height, 10)),
+                });
+              }}
+              style={{ border: "2px dashed #3b82f6" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.image_url} alt="" className="h-full w-full object-contain" draggable={false} />
+            </Rnd>
           ))}
 
           <Rnd

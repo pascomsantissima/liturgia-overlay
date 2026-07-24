@@ -3,31 +3,24 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { FreeImageCanvasEditor } from "@/components/canvas/FreeImageCanvasEditor";
-import type { CanvasBox } from "@/components/canvas/SlotCanvasEditor";
 import type { MediaAssetRow, SlotImagePlacement } from "./types";
 
 export function SlotImages({
   slotId,
-  canvasWidth,
-  canvasHeight,
-  slotsForContext,
+  images,
   mediaAssets,
   onMediaAssetAdded,
-  initialImages,
+  onPlacementAdded,
+  onPlacementRemoved,
 }: {
   slotId: string;
-  canvasWidth: number;
-  canvasHeight: number;
-  slotsForContext: { label: string; pos_x: number; pos_y: number; width: number; height: number }[];
+  images: SlotImagePlacement[];
   mediaAssets: MediaAssetRow[];
   onMediaAssetAdded: (asset: MediaAssetRow) => void;
-  initialImages: SlotImagePlacement[];
+  onPlacementAdded: (placement: SlotImagePlacement) => void;
+  onPlacementRemoved: (id: string) => void;
 }) {
-  const [images, setImages] = useState(initialImages);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,20 +82,7 @@ export function SlotImages({
       return;
     }
 
-    setImages((prev) => [...prev, { ...data, image_url: asset.image_url }]);
-  }
-
-  async function handleUpdatePlacement(placement: SlotImagePlacement, box: CanvasBox) {
-    setImages((prev) => prev.map((p) => (p.id === placement.id ? { ...p, ...box } : p)));
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("template_images")
-      .update(box)
-      .eq("id", placement.id);
-
-    if (error) {
-      toast.error("Não foi possível salvar a posição", { description: error.message });
-    }
+    onPlacementAdded({ ...data, image_url: asset.image_url });
   }
 
   async function handleRemovePlacement(id: string) {
@@ -112,16 +92,17 @@ export function SlotImages({
       toast.error("Não foi possível remover", { description: error.message });
       return;
     }
-    setImages((prev) => prev.filter((p) => p.id !== id));
+    onPlacementRemoved(id);
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <div>
         <p className="mb-1 text-sm font-medium">Imagens no canvas (posição livre deste momento)</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          Fica visível só quando este momento estiver ativo. O banco de imagens é compartilhado —
-          envie uma vez e reaproveite em qualquer momento.
+          Clique numa imagem do banco para colocá-la no canvas acima — arraste e redimensione ali
+          mesmo, junto com a caixa de mensagem. Fica visível só quando este momento estiver ativo. O
+          banco é compartilhado — envie uma vez e reaproveite em qualquer momento.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           {mediaAssets.map((asset) => (
@@ -154,34 +135,19 @@ export function SlotImages({
       </div>
 
       {images.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {images.map((placement) => (
-            <Card key={placement.id} className="p-4">
-              <CardContent className="flex flex-col gap-3 p-0">
-                <FreeImageCanvasEditor
-                  canvasWidth={canvasWidth}
-                  canvasHeight={canvasHeight}
-                  imageUrl={placement.image_url}
-                  box={{
-                    pos_x: placement.pos_x,
-                    pos_y: placement.pos_y,
-                    width: placement.width,
-                    height: placement.height,
-                  }}
-                  otherBoxes={slotsForContext}
-                  onChange={(box) => handleUpdatePlacement(placement, box)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="self-start text-destructive"
-                  onClick={() => handleRemovePlacement(placement.id)}
-                >
-                  Remover do canvas
-                </Button>
-              </CardContent>
-            </Card>
+        <div className="flex flex-wrap gap-2">
+          {images.map((img) => (
+            <div key={img.id} className="flex items-center gap-2 rounded border bg-muted/30 px-2 py-1 text-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.image_url} alt="" className="size-6 object-contain" />
+              <button
+                type="button"
+                onClick={() => handleRemovePlacement(img.id)}
+                className="text-destructive hover:underline"
+              >
+                Remover do canvas
+              </button>
+            </div>
           ))}
         </div>
       )}

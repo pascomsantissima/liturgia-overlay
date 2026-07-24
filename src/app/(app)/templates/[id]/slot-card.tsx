@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { SlotFields } from "./slot-fields";
 import { SlotImages } from "./slot-images";
 import { SlotCanvasEditor, type CanvasBox } from "@/components/canvas/SlotCanvasEditor";
-import type { AutofitMode, GradientDirection, MediaAssetRow, SlotWithFields } from "./types";
+import type { AutofitMode, GradientDirection, MediaAssetRow, SlotImagePlacement, SlotWithFields } from "./types";
 
 export function SlotCard({
   slot,
@@ -64,6 +64,7 @@ export function SlotCard({
     title_color: slot.text_style.title_color ?? slot.text_style.color ?? "#ffffff",
     text_color: slot.text_style.color ?? "#ffffff",
   });
+  const [images, setImages] = useState(slot.template_images);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,6 +72,29 @@ export function SlotCard({
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleImageChange(id: string, box: CanvasBox) {
+    const nextImages = images.map((img) => (img.id === id ? { ...img, ...box } : img));
+    setImages(nextImages);
+    onUpdated({ ...slot, template_images: nextImages });
+    const supabase = createClient();
+    const { error } = await supabase.from("template_images").update(box).eq("id", id);
+    if (error) {
+      toast.error("Não foi possível salvar a posição da imagem", { description: error.message });
+    }
+  }
+
+  function handlePlacementAdded(placement: SlotImagePlacement) {
+    const nextImages = [...images, placement];
+    setImages(nextImages);
+    onUpdated({ ...slot, template_images: nextImages });
+  }
+
+  function handlePlacementRemoved(id: string) {
+    const nextImages = images.filter((img) => img.id !== id);
+    setImages(nextImages);
+    onUpdated({ ...slot, template_images: nextImages });
   }
 
   async function handleSave() {
@@ -104,6 +128,7 @@ export function SlotCard({
         title_color: form.title_color,
         color: form.text_color,
       },
+      template_images: images,
     };
     const supabase = createClient();
     const { data, error } = await supabase
@@ -258,7 +283,9 @@ export function SlotCard({
         <div>
           <p className="mb-2 text-sm font-medium">Posição e tamanho</p>
           <p className="mb-3 text-xs text-muted-foreground">
-            Arraste e redimensione a caixa verde para posicionar a mensagem na tela (1920×1080).
+            Arraste e redimensione a caixa verde para posicionar a mensagem na tela (1920×1080). As
+            imagens livres deste momento (borda azul tracejada) aparecem no mesmo canvas — é
+            exatamente assim que tudo vai ficar sobreposto no OBS.
           </p>
           <SlotCanvasEditor
             canvasWidth={canvasWidth}
@@ -270,6 +297,15 @@ export function SlotCard({
               width: s.width,
               height: s.height,
             }))}
+            images={images.map((img) => ({
+              id: img.id,
+              image_url: img.image_url,
+              pos_x: img.pos_x,
+              pos_y: img.pos_y,
+              width: img.width,
+              height: img.height,
+            }))}
+            onImageChange={handleImageChange}
             activeSlot={{
               label: form.label,
               pos_x: form.pos_x,
@@ -447,18 +483,11 @@ export function SlotCard({
 
         <SlotImages
           slotId={slot.id}
-          canvasWidth={canvasWidth}
-          canvasHeight={canvasHeight}
-          slotsForContext={otherSlots.map((s) => ({
-            label: s.label,
-            pos_x: s.pos_x,
-            pos_y: s.pos_y,
-            width: s.width,
-            height: s.height,
-          }))}
+          images={images}
           mediaAssets={mediaAssets}
           onMediaAssetAdded={onMediaAssetAdded}
-          initialImages={slot.template_images}
+          onPlacementAdded={handlePlacementAdded}
+          onPlacementRemoved={handlePlacementRemoved}
         />
 
         <Separator />
@@ -512,7 +541,7 @@ export function SlotCard({
         <SlotFields
           slotId={slot.id}
           fields={slot.template_slot_fields}
-          onChange={(fields) => onUpdated({ ...slot, template_slot_fields: fields })}
+          onChange={(fields) => onUpdated({ ...slot, template_slot_fields: fields, template_images: images })}
         />
 
         <Separator />
