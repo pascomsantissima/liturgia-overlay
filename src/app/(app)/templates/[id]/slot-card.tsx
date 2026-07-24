@@ -238,10 +238,10 @@ export function SlotCard({
               fields: previewFields.length > 0 ? previewFields : [{ key: "preview", label: "", value: form.label }],
             }}
             onChange={(box: CanvasBox) => {
-              set("pos_x", box.pos_x);
-              set("pos_y", box.pos_y);
-              set("width", box.width);
-              set("height", box.height);
+              set("pos_x", Math.round(box.pos_x));
+              set("pos_y", Math.round(box.pos_y));
+              set("width", Math.round(box.width));
+              set("height", Math.round(box.height));
             }}
           />
           <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
