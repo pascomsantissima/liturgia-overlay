@@ -142,7 +142,7 @@ export function TemplateImages({
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              className="text-sm"
+              className="cursor-pointer text-sm"
               disabled={uploading}
               onChange={(e) => {
                 const file = e.target.files?.[0];

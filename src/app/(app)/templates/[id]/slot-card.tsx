@@ -386,7 +386,12 @@ export function SlotCard({
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">Imagem fixa (canto esquerdo)</p>
+          <p className="mb-2 text-sm font-medium">Imagem fixa (dentro da caixa deste momento)</p>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Fica presa a esta caixa de mensagem (ex: um ícone ao lado do texto). Para colocar uma
+            imagem em qualquer ponto da tela, independente dos momentos, use &quot;Imagens no canvas
+            (posição livre)&quot; mais abaixo, no final da página.
+          </p>
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-2">
               <Label>Arquivo</Label>
@@ -394,7 +399,7 @@ export function SlotCard({
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                className="text-sm"
+                className="cursor-pointer text-sm"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleImageUpload(file);

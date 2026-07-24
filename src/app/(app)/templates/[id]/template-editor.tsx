@@ -250,9 +250,14 @@ export function TemplateEditor({
       <Separator />
 
       <div>
-        <h2 className="font-heading mb-4 text-lg font-semibold tracking-tight">
+        <h2 className="font-heading text-lg font-semibold tracking-tight">
           Imagens no canvas (posição livre)
         </h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Use esta seção para colocar uma imagem em qualquer ponto da tela (logo, marca d&apos;água,
+          etc.), independente dos momentos acima — ela fica sempre visível, sem depender de qual
+          momento está ativo.
+        </p>
         <TemplateImages
           templateId={template.id}
           canvasWidth={template.canvas_width}
