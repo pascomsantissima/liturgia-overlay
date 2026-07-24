@@ -22,7 +22,6 @@ export function ControlPanel({
   slots,
   values: initialValues,
   titleOverrides: initialTitleOverrides,
-  images,
 }: {
   eventId: string;
   eventName: string;
@@ -34,7 +33,6 @@ export function ControlPanel({
   slots: SlotWithFields[];
   values: EventFieldValueRow[];
   titleOverrides: EventSlotTitleRow[];
-  images: { id: string; image_url: string; pos_x: number; pos_y: number; width: number; height: number }[];
 }) {
   const [activeSlotId, setActiveSlotId] = useState(initialActiveSlotId);
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -179,7 +177,7 @@ export function ControlPanel({
           >
             {() => (
               <>
-                {images.map((img) => (
+                {activeSlot?.template_images.map((img) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={img.id}

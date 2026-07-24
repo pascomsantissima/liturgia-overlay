@@ -17,14 +17,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SlotFields } from "./slot-fields";
+import { SlotImages } from "./slot-images";
 import { SlotCanvasEditor, type CanvasBox } from "@/components/canvas/SlotCanvasEditor";
-import type { AutofitMode, GradientDirection, SlotWithFields } from "./types";
+import type { AutofitMode, GradientDirection, MediaAssetRow, SlotWithFields } from "./types";
 
 export function SlotCard({
   slot,
   otherSlots,
   canvasWidth,
   canvasHeight,
+  mediaAssets,
+  onMediaAssetAdded,
   onDeleted,
   onUpdated,
 }: {
@@ -32,6 +35,8 @@ export function SlotCard({
   otherSlots: SlotWithFields[];
   canvasWidth: number;
   canvasHeight: number;
+  mediaAssets: MediaAssetRow[];
+  onMediaAssetAdded: (asset: MediaAssetRow) => void;
   onDeleted: () => void;
   onUpdated: (slot: SlotWithFields) => void;
 }) {
@@ -389,8 +394,8 @@ export function SlotCard({
           <p className="mb-2 text-sm font-medium">Imagem fixa (dentro da caixa deste momento)</p>
           <p className="mb-3 text-xs text-muted-foreground">
             Fica presa a esta caixa de mensagem (ex: um ícone ao lado do texto). Para colocar uma
-            imagem em qualquer ponto da tela, independente dos momentos, use &quot;Imagens no canvas
-            (posição livre)&quot; mais abaixo, no final da página.
+            imagem em qualquer ponto da tela, use &quot;Imagens no canvas&quot; logo abaixo — ela só
+            aparece quando este momento estiver ativo.
           </p>
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-2">
@@ -437,6 +442,26 @@ export function SlotCard({
             </div>
           )}
         </div>
+
+        <Separator />
+
+        <SlotImages
+          slotId={slot.id}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+          slotsForContext={otherSlots.map((s) => ({
+            label: s.label,
+            pos_x: s.pos_x,
+            pos_y: s.pos_y,
+            width: s.width,
+            height: s.height,
+          }))}
+          mediaAssets={mediaAssets}
+          onMediaAssetAdded={onMediaAssetAdded}
+          initialImages={slot.template_images}
+        />
+
+        <Separator />
 
         <div>
           <p className="mb-2 text-sm font-medium">Mensagem</p>

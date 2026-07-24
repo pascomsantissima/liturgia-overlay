@@ -13,8 +13,11 @@ import type {
 
 export type SlotField = TemplateSlotFieldRow;
 
+export type SlotImagePlacement = TemplateImageRow & { image_url: string };
+
 export type SlotWithFields = TemplateSlotRow & {
   template_slot_fields: SlotField[];
+  template_images: SlotImagePlacement[];
 };
 
 export type TemplateWithType = {

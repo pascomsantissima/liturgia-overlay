@@ -22,7 +22,7 @@ export default async function EventControlPage({
 
   const { data: slots } = await supabase
     .from("template_slots")
-    .select("*, template_slot_fields(*)")
+    .select("*, template_slot_fields(*), template_images(*, media_assets(image_url))")
     .eq("template_id", event.template_id)
     .order("sort_order", { ascending: true });
 
@@ -36,25 +36,27 @@ export default async function EventControlPage({
     .select("*")
     .eq("live_event_id", id);
 
-  const { data: templateImages } = await supabase
-    .from("template_images")
-    .select("*, media_assets(image_url)")
-    .eq("template_id", event.template_id)
-    .order("sort_order", { ascending: true });
-
-  const images = ((templateImages ?? []) as unknown as (TemplateImageRow & {
-    media_assets: { image_url: string } | null;
-  })[]).map((img) => ({ ...img, image_url: img.media_assets?.image_url ?? "" }));
-
   const template = event.templates as unknown as {
     name: string;
     canvas_width: number;
     canvas_height: number;
   } | null;
 
-  const orderedSlots = ((slots ?? []) as unknown as SlotWithFields[]).map((s) => ({
+  const orderedSlots = (
+    (slots ?? []) as unknown as (Omit<SlotWithFields, "template_images"> & {
+      template_images: (TemplateImageRow & { media_assets: { image_url: string } | null })[];
+    })[]
+  ).map((s) => ({
     ...s,
     template_slot_fields: [...s.template_slot_fields].sort((a, b) => a.sort_order - b.sort_order),
+    template_images: s.template_images.map((img) => ({
+      id: img.id,
+      image_url: img.media_assets?.image_url ?? "",
+      pos_x: img.pos_x,
+      pos_y: img.pos_y,
+      width: img.width,
+      height: img.height,
+    })),
   }));
 
   return (
@@ -69,7 +71,6 @@ export default async function EventControlPage({
       slots={orderedSlots}
       values={(values ?? []) as EventFieldValueRow[]}
       titleOverrides={(titleOverrides ?? []) as EventSlotTitleRow[]}
-      images={images}
     />
   );
 }

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TemplateEditor } from "./template-editor";
-import type { MediaAssetRow, SlotWithFields, TemplateImageRow, TemplateWithType } from "./types";
+import type { MediaAssetRow, SlotWithFields, TemplateWithType } from "./types";
+import type { TemplateImageRow } from "@/types/database";
 
 export default async function TemplateEditorPage({
   params,
@@ -21,7 +22,7 @@ export default async function TemplateEditorPage({
 
   const { data: slots } = await supabase
     .from("template_slots")
-    .select("*, template_slot_fields(*)")
+    .select("*, template_slot_fields(*), template_images(*, media_assets(image_url))")
     .eq("template_id", id)
     .order("sort_order", { ascending: true });
 
@@ -32,20 +33,18 @@ export default async function TemplateEditorPage({
     .select("*")
     .order("created_at", { ascending: false });
 
-  const { data: templateImages } = await supabase
-    .from("template_images")
-    .select("*, media_assets(image_url)")
-    .eq("template_id", id)
-    .order("sort_order", { ascending: true });
-
-  const initialSlots = ((slots ?? []) as unknown as SlotWithFields[]).map((s) => ({
+  const initialSlots = (
+    (slots ?? []) as unknown as (Omit<SlotWithFields, "template_images"> & {
+      template_images: (TemplateImageRow & { media_assets: { image_url: string } | null })[];
+    })[]
+  ).map((s) => ({
     ...s,
     template_slot_fields: [...s.template_slot_fields].sort((a, b) => a.sort_order - b.sort_order),
+    template_images: s.template_images.map((img) => ({
+      ...img,
+      image_url: img.media_assets?.image_url ?? "",
+    })),
   }));
-
-  const initialImages = ((templateImages ?? []) as unknown as (TemplateImageRow & {
-    media_assets: { image_url: string } | null;
-  })[]).map((img) => ({ ...img, image_url: img.media_assets?.image_url ?? "" }));
 
   return (
     <TemplateEditor
@@ -53,7 +52,6 @@ export default async function TemplateEditorPage({
       initialSlots={initialSlots}
       eventTypes={eventTypes ?? []}
       initialMediaAssets={(mediaAssets ?? []) as MediaAssetRow[]}
-      initialImages={initialImages}
     />
   );
 }

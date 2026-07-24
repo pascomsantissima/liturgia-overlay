@@ -16,32 +16,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { SlotCard } from "./slot-card";
-import { TemplateImages } from "./template-images";
-import type { MediaAssetRow, SlotWithFields, TemplateImageRow, TemplateWithType } from "./types";
+import type { MediaAssetRow, SlotWithFields, TemplateWithType } from "./types";
 
 export function TemplateEditor({
   template,
   initialSlots,
   eventTypes,
   initialMediaAssets,
-  initialImages,
 }: {
   template: TemplateWithType;
   initialSlots: SlotWithFields[];
   eventTypes: { id: string; name: string }[];
   initialMediaAssets: MediaAssetRow[];
-  initialImages: (TemplateImageRow & { image_url: string })[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(template.name);
   const [eventTypeId, setEventTypeId] = useState(template.event_type_id);
   const [slots, setSlots] = useState(initialSlots);
+  const [mediaAssets, setMediaAssets] = useState(initialMediaAssets);
   const [savingInfo, setSavingInfo] = useState(false);
   const [addingSlot, setAddingSlot] = useState(false);
   const [baseSlotId, setBaseSlotId] = useState<string | null>(null);
   const addingSlotRef = useRef(false);
+
+  function handleMediaAssetAdded(asset: MediaAssetRow) {
+    setMediaAssets((prev) => [...prev, asset]);
+  }
 
   async function handleSaveInfo(event: FormEvent) {
     event.preventDefault();
@@ -135,9 +136,42 @@ export function TemplateEditor({
       }
     }
 
+    let clonedImages: SlotWithFields["template_images"] = [];
+    if (baseSlot && baseSlot.template_images.length > 0) {
+      const { data: imagesData, error: imagesError } = await supabase
+        .from("template_images")
+        .insert(
+          baseSlot.template_images.map((img) => ({
+            template_slot_id: data.id,
+            media_asset_id: img.media_asset_id,
+            pos_x: img.pos_x,
+            pos_y: img.pos_y,
+            width: img.width,
+            height: img.height,
+            sort_order: img.sort_order,
+          })),
+        )
+        .select("*");
+
+      if (imagesError) {
+        toast.error("Momento criado, mas não foi possível copiar as imagens", {
+          description: imagesError.message,
+        });
+      } else {
+        const urlByAssetId = new Map(baseSlot.template_images.map((img) => [img.media_asset_id, img.image_url]));
+        clonedImages = (imagesData ?? []).map((img) => ({
+          ...img,
+          image_url: urlByAssetId.get(img.media_asset_id) ?? "",
+        }));
+      }
+    }
+
     addingSlotRef.current = false;
     setAddingSlot(false);
-    setSlots((prev) => [...prev, { ...data, template_slot_fields: clonedFields }]);
+    setSlots((prev) => [
+      ...prev,
+      { ...data, template_slot_fields: clonedFields, template_images: clonedImages },
+    ]);
   }
 
   function handleSlotDeleted(slotId: string) {
@@ -240,38 +274,13 @@ export function TemplateEditor({
               otherSlots={slots.filter((s) => s.id !== slot.id)}
               canvasWidth={template.canvas_width}
               canvasHeight={template.canvas_height}
+              mediaAssets={mediaAssets}
+              onMediaAssetAdded={handleMediaAssetAdded}
               onDeleted={() => handleSlotDeleted(slot.id)}
               onUpdated={handleSlotUpdated}
             />
           ))
         )}
-      </div>
-
-      <Separator />
-
-      <div>
-        <h2 className="font-heading text-lg font-semibold tracking-tight">
-          Imagens no canvas (posição livre)
-        </h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Use esta seção para colocar uma imagem em qualquer ponto da tela (logo, marca d&apos;água,
-          etc.), independente dos momentos acima — ela fica sempre visível, sem depender de qual
-          momento está ativo.
-        </p>
-        <TemplateImages
-          templateId={template.id}
-          canvasWidth={template.canvas_width}
-          canvasHeight={template.canvas_height}
-          slotsForContext={slots.map((s) => ({
-            label: s.label,
-            pos_x: s.pos_x,
-            pos_y: s.pos_y,
-            width: s.width,
-            height: s.height,
-          }))}
-          initialMediaAssets={initialMediaAssets}
-          initialImages={initialImages}
-        />
       </div>
     </div>
   );

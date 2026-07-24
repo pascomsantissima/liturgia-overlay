@@ -50,7 +50,7 @@ export default function OverlayPage({ params }: { params: Promise<{ token: strin
       <CanvasStage width={snapshot.canvas.width} height={snapshot.canvas.height}>
         {() => (
           <>
-            {snapshot.images.map((img) => (
+            {slot?.images.map((img) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={img.id}

@@ -138,7 +138,7 @@ export type MediaAssetRow = {
 
 export type TemplateImageRow = {
   id: string;
-  template_id: string;
+  template_slot_id: string;
   media_asset_id: string;
   pos_x: number;
   pos_y: number;
@@ -152,7 +152,6 @@ export type TemplateImageRow = {
 export type PublicEventSnapshot = {
   event: { id: string; name: string; status: EventStatus };
   canvas: { width: number; height: number };
-  images: { id: string; image_url: string; pos_x: number; pos_y: number; width: number; height: number }[];
   active_slot:
     | (LineBackground & {
         id: string;
@@ -169,6 +168,7 @@ export type PublicEventSnapshot = {
         image_height: number;
         text_style: TextStyle;
         autofit_config: AutofitConfig;
+        images: { id: string; image_url: string; pos_x: number; pos_y: number; width: number; height: number }[];
         fields: (LineBackground & {
           key: string;
           label: string;
@@ -228,7 +228,7 @@ export type Database = {
       >;
       template_images: TableDef<
         TemplateImageRow,
-        { template_id: string; media_asset_id: string } & Partial<TemplateImageRow>,
+        { template_slot_id: string; media_asset_id: string } & Partial<TemplateImageRow>,
         Partial<TemplateImageRow>
       >;
     };

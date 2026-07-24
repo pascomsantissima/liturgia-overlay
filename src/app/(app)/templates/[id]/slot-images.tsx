@@ -8,26 +8,25 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FreeImageCanvasEditor } from "@/components/canvas/FreeImageCanvasEditor";
 import type { CanvasBox } from "@/components/canvas/SlotCanvasEditor";
-import type { MediaAssetRow, TemplateImageRow } from "./types";
+import type { MediaAssetRow, SlotImagePlacement } from "./types";
 
-type Placement = TemplateImageRow & { image_url: string };
-
-export function TemplateImages({
-  templateId,
+export function SlotImages({
+  slotId,
   canvasWidth,
   canvasHeight,
   slotsForContext,
-  initialMediaAssets,
+  mediaAssets,
+  onMediaAssetAdded,
   initialImages,
 }: {
-  templateId: string;
+  slotId: string;
   canvasWidth: number;
   canvasHeight: number;
   slotsForContext: { label: string; pos_x: number; pos_y: number; width: number; height: number }[];
-  initialMediaAssets: MediaAssetRow[];
-  initialImages: Placement[];
+  mediaAssets: MediaAssetRow[];
+  onMediaAssetAdded: (asset: MediaAssetRow) => void;
+  initialImages: SlotImagePlacement[];
 }) {
-  const [mediaAssets, setMediaAssets] = useState(initialMediaAssets);
   const [images, setImages] = useState(initialImages);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,7 +63,7 @@ export function TemplateImages({
       return;
     }
 
-    setMediaAssets((prev) => [...prev, data]);
+    onMediaAssetAdded(data);
     toast.success("Imagem enviada ao banco");
   }
 
@@ -74,7 +73,7 @@ export function TemplateImages({
     const { data, error } = await supabase
       .from("template_images")
       .insert({
-        template_id: templateId,
+        template_slot_id: slotId,
         media_asset_id: asset.id,
         pos_x: 60,
         pos_y: 60,
@@ -93,7 +92,7 @@ export function TemplateImages({
     setImages((prev) => [...prev, { ...data, image_url: asset.image_url }]);
   }
 
-  async function handleUpdatePlacement(placement: Placement, box: CanvasBox) {
+  async function handleUpdatePlacement(placement: SlotImagePlacement, box: CanvasBox) {
     setImages((prev) => prev.map((p) => (p.id === placement.id ? { ...p, ...box } : p)));
     const supabase = createClient();
     const { error } = await supabase
@@ -119,9 +118,10 @@ export function TemplateImages({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="mb-1 text-sm font-medium">Banco de imagens</p>
+        <p className="mb-1 text-sm font-medium">Imagens no canvas (posição livre deste momento)</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          Envie uma imagem uma vez e use quantas vezes quiser, em qualquer posição do canvas.
+          Fica visível só quando este momento estiver ativo. O banco de imagens é compartilhado —
+          envie uma vez e reaproveite em qualquer momento.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           {mediaAssets.map((asset) => (
@@ -129,7 +129,7 @@ export function TemplateImages({
               key={asset.id}
               type="button"
               onClick={() => handleAddPlacement(asset)}
-              title="Adicionar ao canvas"
+              title="Adicionar ao canvas deste momento"
               className="flex size-16 items-center justify-center rounded border bg-muted/40 p-1 hover:ring-2 hover:ring-primary"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -153,45 +153,38 @@ export function TemplateImages({
         </div>
       </div>
 
-      <div>
-        <p className="mb-2 text-sm font-medium">Imagens no canvas</p>
-        {images.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma imagem posicionada ainda. Clique numa imagem do banco acima para adicionar.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {images.map((placement) => (
-              <Card key={placement.id} className="p-4">
-                <CardContent className="flex flex-col gap-3 p-0">
-                  <FreeImageCanvasEditor
-                    canvasWidth={canvasWidth}
-                    canvasHeight={canvasHeight}
-                    imageUrl={placement.image_url}
-                    box={{
-                      pos_x: placement.pos_x,
-                      pos_y: placement.pos_y,
-                      width: placement.width,
-                      height: placement.height,
-                    }}
-                    otherBoxes={slotsForContext}
-                    onChange={(box) => handleUpdatePlacement(placement, box)}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="self-start text-destructive"
-                    onClick={() => handleRemovePlacement(placement.id)}
-                  >
-                    Remover do canvas
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+      {images.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {images.map((placement) => (
+            <Card key={placement.id} className="p-4">
+              <CardContent className="flex flex-col gap-3 p-0">
+                <FreeImageCanvasEditor
+                  canvasWidth={canvasWidth}
+                  canvasHeight={canvasHeight}
+                  imageUrl={placement.image_url}
+                  box={{
+                    pos_x: placement.pos_x,
+                    pos_y: placement.pos_y,
+                    width: placement.width,
+                    height: placement.height,
+                  }}
+                  otherBoxes={slotsForContext}
+                  onChange={(box) => handleUpdatePlacement(placement, box)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="self-start text-destructive"
+                  onClick={() => handleRemovePlacement(placement.id)}
+                >
+                  Remover do canvas
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
