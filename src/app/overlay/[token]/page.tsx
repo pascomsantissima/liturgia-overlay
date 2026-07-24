@@ -39,7 +39,7 @@ export default function OverlayPage({ params }: { params: Promise<{ token: strin
     };
   }, [token]);
 
-  if (!snapshot?.active_slot) {
+  if (!snapshot) {
     return <div className="h-screen w-screen bg-transparent" />;
   }
 
@@ -49,20 +49,40 @@ export default function OverlayPage({ params }: { params: Promise<{ token: strin
     <div className="h-screen w-screen bg-transparent">
       <CanvasStage width={snapshot.canvas.width} height={snapshot.canvas.height}>
         {() => (
-          <SlotRenderer
-            slot={{
-              ...slot,
-              fields: slot.fields.map((f) => ({
-                key: f.key,
-                label: f.label,
-                value: f.value,
-                bg_color: f.bg_color,
-                bg_opacity: f.bg_opacity,
-                bg_gradient_to: f.bg_gradient_to,
-                bg_gradient_direction: f.bg_gradient_direction,
-              })),
-            }}
-          />
+          <>
+            {snapshot.images.map((img) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={img.id}
+                src={img.image_url}
+                alt=""
+                style={{
+                  position: "absolute",
+                  left: img.pos_x,
+                  top: img.pos_y,
+                  width: img.width,
+                  height: img.height,
+                  objectFit: "contain",
+                }}
+              />
+            ))}
+            {slot && (
+              <SlotRenderer
+                slot={{
+                  ...slot,
+                  fields: slot.fields.map((f) => ({
+                    key: f.key,
+                    label: f.label,
+                    value: f.value,
+                    bg_color: f.bg_color,
+                    bg_opacity: f.bg_opacity,
+                    bg_gradient_to: f.bg_gradient_to,
+                    bg_gradient_direction: f.bg_gradient_direction,
+                  })),
+                }}
+              />
+            )}
+          </>
         )}
       </CanvasStage>
     </div>

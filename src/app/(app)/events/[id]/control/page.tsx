@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ControlPanel } from "./control-panel";
 import type { EventFieldValueRow, EventSlotTitleRow, SlotWithFields } from "../content/types";
+import type { TemplateImageRow } from "@/types/database";
 
 export default async function EventControlPage({
   params,
@@ -35,6 +36,16 @@ export default async function EventControlPage({
     .select("*")
     .eq("live_event_id", id);
 
+  const { data: templateImages } = await supabase
+    .from("template_images")
+    .select("*, media_assets(image_url)")
+    .eq("template_id", event.template_id)
+    .order("sort_order", { ascending: true });
+
+  const images = ((templateImages ?? []) as unknown as (TemplateImageRow & {
+    media_assets: { image_url: string } | null;
+  })[]).map((img) => ({ ...img, image_url: img.media_assets?.image_url ?? "" }));
+
   const template = event.templates as unknown as {
     name: string;
     canvas_width: number;
@@ -58,6 +69,7 @@ export default async function EventControlPage({
       slots={orderedSlots}
       values={(values ?? []) as EventFieldValueRow[]}
       titleOverrides={(titleOverrides ?? []) as EventSlotTitleRow[]}
+      images={images}
     />
   );
 }

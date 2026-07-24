@@ -128,9 +128,31 @@ export type EventSlotTitleRow = {
   updated_at: string;
 };
 
+export type MediaAssetRow = {
+  id: string;
+  name: string;
+  image_url: string;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type TemplateImageRow = {
+  id: string;
+  template_id: string;
+  media_asset_id: string;
+  pos_x: number;
+  pos_y: number;
+  width: number;
+  height: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PublicEventSnapshot = {
   event: { id: string; name: string; status: EventStatus };
   canvas: { width: number; height: number };
+  images: { id: string; image_url: string; pos_x: number; pos_y: number; width: number; height: number }[];
   active_slot:
     | (LineBackground & {
         id: string;
@@ -198,6 +220,16 @@ export type Database = {
         EventSlotTitleRow,
         { live_event_id: string; template_slot_id: string } & Partial<EventSlotTitleRow>,
         Partial<EventSlotTitleRow>
+      >;
+      media_assets: TableDef<
+        MediaAssetRow,
+        { image_url: string } & Partial<MediaAssetRow>,
+        Partial<MediaAssetRow>
+      >;
+      template_images: TableDef<
+        TemplateImageRow,
+        { template_id: string; media_asset_id: string } & Partial<TemplateImageRow>,
+        Partial<TemplateImageRow>
       >;
     };
     Views: Record<string, never>;

@@ -16,17 +16,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { SlotCard } from "./slot-card";
-import type { SlotWithFields, TemplateWithType } from "./types";
+import { TemplateImages } from "./template-images";
+import type { MediaAssetRow, SlotWithFields, TemplateImageRow, TemplateWithType } from "./types";
 
 export function TemplateEditor({
   template,
   initialSlots,
   eventTypes,
+  initialMediaAssets,
+  initialImages,
 }: {
   template: TemplateWithType;
   initialSlots: SlotWithFields[];
   eventTypes: { id: string; name: string }[];
+  initialMediaAssets: MediaAssetRow[];
+  initialImages: (TemplateImageRow & { image_url: string })[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(template.name);
@@ -155,6 +161,28 @@ export function TemplateEditor({
             />
           ))
         )}
+      </div>
+
+      <Separator />
+
+      <div>
+        <h2 className="font-heading mb-4 text-lg font-semibold tracking-tight">
+          Imagens no canvas (posição livre)
+        </h2>
+        <TemplateImages
+          templateId={template.id}
+          canvasWidth={template.canvas_width}
+          canvasHeight={template.canvas_height}
+          slotsForContext={slots.map((s) => ({
+            label: s.label,
+            pos_x: s.pos_x,
+            pos_y: s.pos_y,
+            width: s.width,
+            height: s.height,
+          }))}
+          initialMediaAssets={initialMediaAssets}
+          initialImages={initialImages}
+        />
       </div>
     </div>
   );

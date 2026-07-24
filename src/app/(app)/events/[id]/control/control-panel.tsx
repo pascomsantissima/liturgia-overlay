@@ -22,6 +22,7 @@ export function ControlPanel({
   slots,
   values: initialValues,
   titleOverrides: initialTitleOverrides,
+  images,
 }: {
   eventId: string;
   eventName: string;
@@ -33,6 +34,7 @@ export function ControlPanel({
   slots: SlotWithFields[];
   values: EventFieldValueRow[];
   titleOverrides: EventSlotTitleRow[];
+  images: { id: string; image_url: string; pos_x: number; pos_y: number; width: number; height: number }[];
 }) {
   const [activeSlotId, setActiveSlotId] = useState(initialActiveSlotId);
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -175,25 +177,43 @@ export function ControlPanel({
             height={canvasHeight}
             className="overflow-hidden rounded-md border bg-[repeating-conic-gradient(#374151_0%_25%,#1f2937_0%_50%)] bg-[length:32px_32px]"
           >
-            {() =>
-              activeSlot ? (
-                <SlotRenderer
-                  slot={{
-                    ...activeSlot,
-                    label: effectiveLabel(activeSlot),
-                    fields: activeSlot.template_slot_fields.map((f) => ({
-                      key: f.key,
-                      label: f.label,
-                      value: values[f.id] ?? "",
-                      bg_color: f.bg_color,
-                      bg_opacity: f.bg_opacity,
-                      bg_gradient_to: f.bg_gradient_to,
-                      bg_gradient_direction: f.bg_gradient_direction,
-                    })),
-                  }}
-                />
-              ) : null
-            }
+            {() => (
+              <>
+                {images.map((img) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={img.id}
+                    src={img.image_url}
+                    alt=""
+                    style={{
+                      position: "absolute",
+                      left: img.pos_x,
+                      top: img.pos_y,
+                      width: img.width,
+                      height: img.height,
+                      objectFit: "contain",
+                    }}
+                  />
+                ))}
+                {activeSlot && (
+                  <SlotRenderer
+                    slot={{
+                      ...activeSlot,
+                      label: effectiveLabel(activeSlot),
+                      fields: activeSlot.template_slot_fields.map((f) => ({
+                        key: f.key,
+                        label: f.label,
+                        value: values[f.id] ?? "",
+                        bg_color: f.bg_color,
+                        bg_opacity: f.bg_opacity,
+                        bg_gradient_to: f.bg_gradient_to,
+                        bg_gradient_direction: f.bg_gradient_direction,
+                      })),
+                    }}
+                  />
+                )}
+              </>
+            )}
           </CanvasStage>
         </div>
       </div>
