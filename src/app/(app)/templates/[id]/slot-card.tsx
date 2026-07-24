@@ -30,6 +30,8 @@ export function SlotCard({
   onMediaAssetAdded,
   onDeleted,
   onUpdated,
+  onDuplicate,
+  duplicating,
 }: {
   slot: SlotWithFields;
   otherSlots: SlotWithFields[];
@@ -39,6 +41,8 @@ export function SlotCard({
   onMediaAssetAdded: (asset: MediaAssetRow) => void;
   onDeleted: () => void;
   onUpdated: (slot: SlotWithFields) => void;
+  onDuplicate: () => void;
+  duplicating: boolean;
 }) {
   const [form, setForm] = useState({
     key: slot.key,
@@ -553,6 +557,14 @@ export function SlotCard({
             className="brand-gradient border-0 text-white hover:opacity-90"
           >
             {saving ? "Salvando..." : "Salvar momento"}
+          </Button>
+          <Button
+            onClick={onDuplicate}
+            disabled={duplicating}
+            variant="outline"
+            title="Cria um novo momento com a mesma posição, cores, imagens e campos deste"
+          >
+            {duplicating ? "Duplicando..." : "Duplicar momento"}
           </Button>
           <Button onClick={handleDelete} disabled={deleting} variant="destructive">
             {deleting ? "Excluindo..." : "Excluir momento"}

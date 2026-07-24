@@ -37,7 +37,6 @@ export function TemplateEditor({
   const [mediaAssets, setMediaAssets] = useState(initialMediaAssets);
   const [savingInfo, setSavingInfo] = useState(false);
   const [addingSlot, setAddingSlot] = useState(false);
-  const [baseSlotId, setBaseSlotId] = useState<string | null>(null);
   const addingSlotRef = useRef(false);
 
   function handleMediaAssetAdded(asset: MediaAssetRow) {
@@ -62,13 +61,12 @@ export function TemplateEditor({
     router.refresh();
   }
 
-  async function handleAddSlot() {
+  async function handleAddSlot(baseSlot: SlotWithFields | null) {
     if (addingSlotRef.current) return;
     addingSlotRef.current = true;
     setAddingSlot(true);
     const supabase = createClient();
     const nextOrder = slots.length;
-    const baseSlot = slots.find((s) => s.id === baseSlotId) ?? null;
 
     const { data, error } = await supabase
       .from("template_slots")
@@ -225,41 +223,10 @@ export function TemplateEditor({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-lg font-semibold tracking-tight">Momentos de exibição</h2>
-          <div className="flex items-end gap-2">
-            {slots.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <Label className="text-xs text-muted-foreground">
-                  Basear posição, cores e campos em
-                </Label>
-                <Select
-                  value={baseSlotId ?? "none"}
-                  onValueChange={(v) => setBaseSlotId(v === "none" ? null : v)}
-                >
-                  <SelectTrigger className="w-56">
-                    <SelectValue>
-                      {(value: string | null) =>
-                        value && value !== "none"
-                          ? (slots.find((s) => s.id === value)?.label ?? "Em branco")
-                          : "Em branco"
-                      }
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Em branco</SelectItem>
-                    {slots.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <Button onClick={handleAddSlot} disabled={addingSlot} variant="outline">
-              <Plus className="size-4" />
-              {addingSlot ? "Adicionando..." : "Adicionar momento"}
-            </Button>
-          </div>
+          <Button onClick={() => handleAddSlot(null)} disabled={addingSlot} variant="outline">
+            <Plus className="size-4" />
+            {addingSlot ? "Adicionando..." : "Adicionar momento em branco"}
+          </Button>
         </div>
 
         {slots.length === 0 ? (
@@ -278,6 +245,8 @@ export function TemplateEditor({
               onMediaAssetAdded={handleMediaAssetAdded}
               onDeleted={() => handleSlotDeleted(slot.id)}
               onUpdated={handleSlotUpdated}
+              onDuplicate={() => handleAddSlot(slot)}
+              duplicating={addingSlot}
             />
           ))
         )}
