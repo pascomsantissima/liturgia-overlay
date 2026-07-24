@@ -70,6 +70,36 @@ export function SlotCard({
 
   async function handleSave() {
     setSaving(true);
+    const updatedSlot: SlotWithFields = {
+      ...slot,
+      key: form.key,
+      label: form.label,
+      pos_x: form.pos_x,
+      pos_y: form.pos_y,
+      width: form.width,
+      height: form.height,
+      bg_color: form.bg_color,
+      bg_opacity: form.bg_opacity,
+      bg_gradient_to: form.bg_gradient_to || null,
+      bg_gradient_direction: form.bg_gradient_direction,
+      title_editable: form.title_editable,
+      image_url: form.image_url,
+      image_pos_x: form.image_pos_x,
+      image_pos_y: form.image_pos_y,
+      image_width: form.image_width,
+      image_height: form.image_height,
+      autofit_config: {
+        mode: form.autofit_mode,
+        min_font_size: form.min_font_size,
+        max_font_size: form.max_font_size,
+      },
+      text_style: {
+        ...slot.text_style,
+        title_font_size: form.title_font_size,
+        title_color: form.title_color,
+        color: form.text_color,
+      },
+    };
     const supabase = createClient();
     const { data, error } = await supabase
       .from("template_slots")
@@ -103,17 +133,22 @@ export function SlotCard({
         },
       })
       .eq("id", slot.id)
-      .select("*")
-      .single();
+      .select("id");
     setSaving(false);
 
-    if (error || !data) {
-      toast.error("Não foi possível salvar o momento", { description: error?.message });
+    if (error) {
+      toast.error("Não foi possível salvar o momento", { description: error.message });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast.error("Não foi possível salvar o momento", {
+        description: "O momento não foi encontrado. Recarregue a página e tente novamente.",
+      });
       return;
     }
 
     toast.success("Momento salvo");
-    onUpdated({ ...data, template_slot_fields: slot.template_slot_fields });
+    onUpdated(updatedSlot);
   }
 
   async function handleDelete() {
@@ -447,7 +482,7 @@ export function SlotCard({
         <SlotFields
           slotId={slot.id}
           fields={slot.template_slot_fields}
-          onChange={(fields) => onUpdated({ ...slot, ...form, template_slot_fields: fields })}
+          onChange={(fields) => onUpdated({ ...slot, template_slot_fields: fields })}
         />
 
         <Separator />

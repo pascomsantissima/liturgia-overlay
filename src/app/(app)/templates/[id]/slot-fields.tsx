@@ -142,6 +142,17 @@ function FieldRow({
 
   async function handleSave() {
     setSaving(true);
+    const updatedField: SlotField = {
+      ...field,
+      key,
+      label,
+      field_type: fieldType,
+      required,
+      bg_color: bgColor,
+      bg_opacity: bgOpacity,
+      bg_gradient_to: gradientTo || null,
+      bg_gradient_direction: gradientDirection,
+    };
     const supabase = createClient();
     const { data, error } = await supabase
       .from("template_slot_fields")
@@ -156,15 +167,20 @@ function FieldRow({
         bg_gradient_direction: gradientDirection,
       })
       .eq("id", field.id)
-      .select("*")
-      .single();
+      .select("id");
     setSaving(false);
 
-    if (error || !data) {
-      toast.error("Não foi possível salvar o campo", { description: error?.message });
+    if (error) {
+      toast.error("Não foi possível salvar o campo", { description: error.message });
       return;
     }
-    onUpdated(data);
+    if (!data || data.length === 0) {
+      toast.error("Não foi possível salvar o campo", {
+        description: "O campo não foi encontrado. Recarregue a página e tente novamente.",
+      });
+      return;
+    }
+    onUpdated(updatedField);
   }
 
   async function handleDelete() {
