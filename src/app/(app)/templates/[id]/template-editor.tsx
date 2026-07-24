@@ -67,12 +67,15 @@ export function TemplateEditor({
     setAddingSlot(true);
     const supabase = createClient();
     const nextOrder = slots.length;
+    const existingKeys = new Set(slots.map((s) => s.key));
+    let nextKeyNumber = nextOrder + 1;
+    while (existingKeys.has(`momento-${nextKeyNumber}`)) nextKeyNumber++;
 
     const { data, error } = await supabase
       .from("template_slots")
       .insert({
         template_id: template.id,
-        key: `momento-${nextOrder + 1}`,
+        key: `momento-${nextKeyNumber}`,
         label: "Novo momento",
         sort_order: nextOrder,
         ...(baseSlot && {
